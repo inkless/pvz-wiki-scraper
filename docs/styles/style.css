@@ -50,7 +50,7 @@ body {
 }
 
 /* Page title */
-h1 {
+.content-title {
     color: #fff;
     margin: 0 0 1.5em 0;
     padding: 20px 0;
@@ -512,7 +512,7 @@ figcaption {
         order: -1;
     }
     
-    h1 {
+    .content-title {
         font-size: 2em;
     }
     
@@ -526,7 +526,7 @@ figcaption {
         padding: 10px;
     }
     
-    h1 {
+    .content-title {
         font-size: 1.8em;
         padding: 15px 0;
     }
