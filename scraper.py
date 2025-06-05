@@ -8,7 +8,6 @@ import requests
 from bs4 import BeautifulSoup
 from pathlib import Path
 import sys
-import shutil
 import argparse
 import time
 import urllib.parse
@@ -94,23 +93,10 @@ class PvZWikiScraper:
             self.session, self.output_dir, "https://pvz.fandom.com"
         )
 
-        # Ensure styles are copied to output directory
-        self._ensure_styles_copied()
+        # Styles are already in docs/styles/ - no need to copy
 
         # Load template
         self.template = self._load_template()
-
-    def _ensure_styles_copied(self):
-        """Ensure styles directory is copied to output for proper CSS loading"""
-        styles_source = Path("styles")
-        styles_dest = self.output_dir / "styles"
-
-        if styles_source.exists():
-            if styles_dest.exists():
-                # Remove existing styles and copy fresh ones
-                shutil.rmtree(styles_dest)
-            shutil.copytree(styles_source, styles_dest)
-            print(f"📎 Copied styles to: {styles_dest}")
 
     def _load_template(self):
         """Load HTML template from file"""
@@ -371,8 +357,8 @@ Examples:
     parser.add_argument(
         "--delay",
         type=float,
-        default=1.5,
-        help="Delay between requests in seconds (default: 1.5)",
+        default=0.1,
+        help="Delay between requests in seconds (default: 0.1)",
     )
 
     return parser

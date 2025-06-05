@@ -11,7 +11,7 @@ USER_AGENT = (
 REQUEST_TIMEOUT = 10
 
 # Output settings
-OUTPUT_DIR = "output"
+OUTPUT_DIR = "docs"
 MAX_FILENAME_LENGTH = 100
 
 # Template files

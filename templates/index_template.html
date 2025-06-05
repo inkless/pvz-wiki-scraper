@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>植物大战僵尸植物图鉴</title>
+    <meta name="description" content="植物大战僵尸植物图鉴 - 完整的植物资料库">
+    <link rel="stylesheet" href="./styles/style.css">
+    <style>
+        .plant-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .plant-card {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 20px;
+            text-decoration: none;
+            color: inherit;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .plant-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+        .plant-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #2c5530;
+        }
+        .header {
+            text-align: center;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #4CAF50, #2E7D32);
+            color: white;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+        }
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+        }
+        .search-box {
+            max-width: 400px;
+            margin: 20px auto;
+            position: relative;
+        }
+        .search-box input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+        }
+        .search-box input:focus {
+            border-color: #4CAF50;
+        }
+        .stats {
+            text-align: center;
+            margin: 20px 0;
+            color: #666;
+        }
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            background: #f5f5f5;
+            margin-top: 50px;
+            color: #666;
+        }
+        .last-updated {
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🌱 植物大战僵尸植物图鉴</h1>
+        <p>探索所有植物的详细资料和游戏数据</p>
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="搜索植物名称...">
+        </div>
+    </div>
+
+    <div class="stats">
+        <p>共收录 <span id="plantCount">$plant_count</span> 种植物</p>
+    </div>
+
+    <div class="plant-grid" id="plantGrid">
+        <!-- Plants will be loaded here -->
+    </div>
+
+    <div class="footer">
+        <p>数据来源: <a href="https://plantsvszombies.fandom.com/zh/wiki/" 
+           target="_blank">植物大战僵尸中文维基</a></p>
+        <div class="last-updated">最后更新: $last_updated</div>
+    </div>
+
+    <script>
+        const plantList = $plant_list_json;
+
+        function renderPlants(plantsToShow = plantList) {
+            const grid = document.getElementById('plantGrid');
+            grid.innerHTML = '';
+            
+            plantsToShow.forEach(plant => {
+                const card = document.createElement('a');
+                card.className = 'plant-card';
+                card.href = './' + plant + '.html';
+                card.innerHTML = 
+                    '<div class="plant-name">' + plant + '</div>' +
+                    '<div>点击查看详细资料</div>';
+                grid.appendChild(card);
+            });
+            
+            document.getElementById('plantCount').textContent = 
+                plantsToShow.length;
+        }
+
+        function setupSearch() {
+            const searchInput = document.getElementById('searchInput');
+            searchInput.addEventListener('input', (e) => {
+                const query = e.target.value.toLowerCase();
+                const filtered = plantList.filter(plant => 
+                    plant.toLowerCase().includes(query)
+                );
+                renderPlants(filtered);
+            });
+        }
+
+        // Initialize
+        renderPlants();
+        setupSearch();
+    </script>
+</body>
+</html> 
