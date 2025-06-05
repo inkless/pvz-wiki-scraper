@@ -31,15 +31,8 @@ class ContentProcessor:
         # Additional content filtering improvements
         self._apply_content_filters(cleaned)
 
-        # Clean up links - convert internal wiki links to text
-        for link in cleaned.find_all("a"):
-            href = link.get("href", "")
-            if href.startswith("/wiki/") or "fandom.com" in href:
-                # Convert internal links to plain text or remove href
-                if link.text.strip():
-                    link.replace_with(link.text)
-                else:
-                    link.decompose()
+        # Convert internal wiki links to local HTML files
+        self._convert_wiki_links(cleaned)
 
         # Remove empty paragraphs and divs
         for tag in cleaned.find_all(["p", "div"]):
@@ -84,6 +77,53 @@ class ContentProcessor:
         # 6. Clean up TOC entries for removed sections
         self._clean_toc_entries(soup)
 
+    def _convert_wiki_links(self, soup):
+        """Convert internal wiki links to local HTML files"""
+        import urllib.parse
+
+        for link in soup.find_all("a"):
+            href = link.get("href", "")
+
+            # Check if it's an internal wiki link
+            if href.startswith("/zh/wiki/") or href.startswith("/wiki/"):
+                # Extract the page name from the URL
+                page_name = href.split("/")[-1]
+                # URL decode the page name
+                page_name = urllib.parse.unquote(page_name)
+
+                # Convert to local HTML file
+                local_href = f"./{page_name}.html"
+                link["href"] = local_href
+
+                # Add a class to indicate it's a local wiki link
+                existing_class = link.get("class", [])
+                if isinstance(existing_class, str):
+                    existing_class = [existing_class]
+                existing_class.append("wiki-link")
+                link["class"] = existing_class
+
+            elif "fandom.com" in href and "/wiki/" in href:
+                # Handle full fandom URLs
+                # Extract page name from full URL
+                parsed = urllib.parse.urlparse(href)
+                if parsed.path and "/wiki/" in parsed.path:
+                    page_name = parsed.path.split("/")[-1]
+                    page_name = urllib.parse.unquote(page_name)
+
+                    # Convert to local HTML file
+                    local_href = f"./{page_name}.html"
+                    link["href"] = local_href
+
+                    # Add a class to indicate it's a local wiki link
+                    existing_class = link.get("class", [])
+                    if isinstance(existing_class, str):
+                        existing_class = [existing_class]
+                    existing_class.append("wiki-link")
+                    link["class"] = existing_class
+
+            # For external links, we can leave them as-is or mark them
+            # so they open in new tabs when viewed locally
+
     def _remove_section_by_title(self, soup, section_title):
         """Remove entire sections by their heading title"""
         # Look for headings that contain the section title
@@ -122,7 +162,7 @@ class ContentProcessor:
                 break
 
     def _clean_see_also_section(self, soup):
-        """Clean the 参见 (See Also) section by removing .navbar divs"""
+        """Clean the 参见 (See Also) section by removing .navbar divs and first ul"""
         for heading in soup.find_all(["h1", "h2", "h3", "h4", "h5", "h6"]):
             heading_text = heading.get_text(strip=True)
             if (
@@ -133,6 +173,7 @@ class ContentProcessor:
                 # Find the next content until the next heading
                 current_level = int(heading.name[1])
                 element = heading.next_sibling
+                first_ul_removed = False
 
                 while element:
                     if (
@@ -142,6 +183,14 @@ class ContentProcessor:
                         and int(element.name[1]) <= current_level
                     ):
                         break
+
+                    # Remove the first ul element we encounter
+                    if element.name == "ul" and not first_ul_removed:
+                        next_element = element.next_sibling
+                        element.decompose()
+                        element = next_element
+                        first_ul_removed = True
+                        continue
 
                     # Remove .navbar divs in this section
                     if hasattr(element, "find_all"):
@@ -153,17 +202,59 @@ class ContentProcessor:
     def _create_enhanced_infobox(self, soup):
         """Create enhanced infobox with tabs matching the screenshot design"""
 
+        # Find portable infobox (the actual structure used by the wiki)
+        infobox = soup.find("aside", class_=re.compile(r"portable-infobox"))
+
+        # Fallback to older infobox patterns if portable infobox not found
+        if not infobox:
+            infobox = soup.find(["div", "table"], class_=re.compile(r"infobox|pi-item"))
+
+        if not infobox:
+            return ""
+
         # Extract data from existing infobox
-        infobox_data = self._extract_infobox_data(soup)
+        infobox_data = self._extract_infobox_data(infobox)
+
+        # Extract title from portable infobox
+        title_elem = infobox.find("h2", class_=re.compile(r"pi-title"))
+        if not title_elem:
+            # Try alternative title selectors
+            title_elem = infobox.find(
+                ["h1", "h2", "div"], class_=re.compile(r"pi-title|infobox-title")
+            )
+
+        if title_elem:
+            title_text = title_elem.get_text(strip=True)
+            # Clean up the title if it looks garbled
+            if title_text and len(title_text) > 1 and not title_text.isspace():
+                title = title_text
+            else:
+                # Extract from page URL or try to find page title elsewhere
+                title = self._extract_page_title_fallback(soup)
+        else:
+            title = self._extract_page_title_fallback(soup)
+
+        # Extract main image from portable infobox
+        img_elem = infobox.find("img")
+        if img_elem:
+            src = img_elem.get("data-src") or img_elem.get("src", "")
+            alt = title
+            if src:
+                image = f'<img src="{src}" alt="{alt}" class="plant-image">'
+            else:
+                image = ""
+        else:
+            image = ""
+
+        # Add extracted info to infobox_data
+        infobox_data["title"] = title
+        infobox_data["image"] = image
+        infobox_data["page_content"] = soup
 
         if not infobox_data:
             return ""
 
         # Create the enhanced infobox HTML
-        title = infobox_data.get("title", "未知植物")
-        image = infobox_data.get("image", "")
-        description = self._get_plant_description(title)
-        description_tab = self._create_description_tab(infobox_data)
         gamedata_tab = self._create_gamedata_tab(infobox_data)
         names_tab = self._create_names_tab(infobox_data)
 
@@ -181,21 +272,9 @@ class ContentProcessor:
                 """
             + image
             + """
-                <div class="plant-description">"""
-            + description
-            + """</div>
             </div>
             
             <div class="infobox-sections">
-                <div class="info-section">
-                    <div class="section-header">图鉴描述</div>
-                    <div class="section-content">
-                        """
-            + description_tab
-            + """
-                    </div>
-                </div>
-                
                 <div class="info-section">
                     <div class="section-header">游戏数据</div>
                     <div class="section-content">
@@ -221,102 +300,56 @@ class ContentProcessor:
 
         return infobox_html
 
-    def _extract_infobox_data(self, soup):
-        """Extract data from the existing wiki infobox"""
-        data = {}
+    def _extract_infobox_data(self, infobox):
+        """Extract data from infobox, preserving tab structure if present."""
+        data = {"fields": {}, "tabs": {}}
 
-        # Find portable infobox (the actual structure used by the wiki)
-        infobox = soup.find("aside", class_=re.compile(r"portable-infobox"))
-
-        # Fallback to older infobox patterns if portable infobox not found
-        if not infobox:
-            infobox = soup.find(["div", "table"], class_=re.compile(r"infobox|pi-item"))
-
-        if not infobox:
-            return None
-
-        # Extract title from portable infobox
-        title_elem = infobox.find("h2", class_=re.compile(r"pi-title"))
-        if not title_elem:
-            # Try alternative title selectors
-            title_elem = infobox.find(
-                ["h1", "h2", "div"], class_=re.compile(r"pi-title|infobox-title")
-            )
-
-        if title_elem:
-            title_text = title_elem.get_text(strip=True)
-            # Clean up the title if it looks garbled
-            if title_text and len(title_text) > 1 and not title_text.isspace():
-                data["title"] = title_text
-            else:
-                # Extract from page URL or try to find page title elsewhere
-                data["title"] = self._extract_page_title_fallback(soup)
-        else:
-            data["title"] = self._extract_page_title_fallback(soup)
-
-        # Extract main image from portable infobox
-        img_elem = infobox.find("img")
-        if img_elem:
-            src = img_elem.get("data-src") or img_elem.get("src", "")
-            alt = data.get("title", "")
-            if src:
-                data["image"] = f'<img src="{src}" alt="{alt}" class="plant-image">'
-            else:
-                data["image"] = ""
-        else:
-            data["image"] = ""
-
-        # Extract data fields from portable infobox structure
-        data_fields = {}
-
-        # Look for pi-data sections (portable infobox data)
-        for data_elem in infobox.find_all("div", class_=re.compile(r"pi-data")):
-            label_elem = data_elem.find("h3", class_=re.compile(r"pi-data-label"))
-            value_elem = data_elem.find("div", class_=re.compile(r"pi-data-value"))
+        # Extract individual data fields (for backward compatibility)
+        for pi_data in infobox.find_all("div", class_=re.compile(r"pi-data")):
+            label_elem = pi_data.find("h3", class_=re.compile(r"pi-data-label"))
+            value_elem = pi_data.find("div", class_=re.compile(r"pi-data-value"))
 
             if label_elem and value_elem:
                 label = label_elem.get_text(strip=True)
                 value = value_elem.get_text(strip=True)
+                data["fields"][label] = value
 
-                if label and value:
-                    data_fields[label] = value
+        # Check for tabbed structure
+        tabber = infobox.find("section", class_=re.compile(r"wds-tabber"))
+        if tabber:
+            # Extract tab labels
+            tab_labels = tabber.find_all(
+                "div", class_=re.compile(r"wds-tabs__tab-label")
+            )
 
-        # Also check for traditional infobox data structure as fallback
-        if not data_fields:
-            for data_elem in infobox.find_all(
-                ["div", "tr"], class_=re.compile(r"pi-data|infobox-data")
-            ):
-                label_elem = data_elem.find(
-                    ["div", "td", "h3"],
-                    class_=re.compile(r"pi-data-label|infobox-label"),
-                )
-                value_elem = data_elem.find(
-                    ["div", "td"], class_=re.compile(r"pi-data-value|infobox-value")
-                )
+            # Extract tab content
+            tab_contents = tabber.find_all(
+                "div", class_=re.compile(r"wds-tab__content")
+            )
 
-                if label_elem and value_elem:
-                    label = label_elem.get_text(strip=True)
-                    value = value_elem.get_text(strip=True)
-                    if label and value:
-                        data_fields[label] = value
+            # Pair labels with content
+            for i, content in enumerate(tab_contents):
+                if i < len(tab_labels):
+                    tab_label = tab_labels[i].get_text(strip=True)
+                    tab_data = {}
 
-        data["fields"] = data_fields
+                    # Extract fields from this tab
+                    for pi_data in content.find_all(
+                        "div", class_=re.compile(r"pi-data")
+                    ):
+                        label_elem = pi_data.find(
+                            "h3", class_=re.compile(r"pi-data-label")
+                        )
+                        value_elem = pi_data.find(
+                            "div", class_=re.compile(r"pi-data-value")
+                        )
 
-        # Extract character navigation images
-        nav_elem = infobox.find("div", class_=re.compile(r"pi-charanav|character-nav"))
-        nav_images = []
-        if nav_elem:
-            for img in nav_elem.find_all("img"):
-                nav_images.append(
-                    {
-                        "src": img.get("data-src") or img.get("src", ""),
-                        "alt": img.get("alt", ""),
-                    }
-                )
-        data["navigation"] = nav_images
+                        if label_elem and value_elem:
+                            label = label_elem.get_text(strip=True)
+                            value = value_elem.get_text(strip=True)
+                            tab_data[label] = value
 
-        # Extract additional content from page for descriptions
-        data["page_content"] = soup
+                    data["tabs"][tab_label] = tab_data
 
         return data
 
@@ -340,181 +373,128 @@ class ContentProcessor:
                 if title and len(title) > 1:
                     return title
 
-        return "未知植物"  # Fallback
+        return ""  # Return empty instead of fallback
 
-    def _create_description_tab(self, data):
-        """Create the description tab content with real plant data"""
-        # Try to extract description from wiki data first
-        description = self._extract_description_from_page(data)
-
-        # If no description found, use hardcoded as fallback
-        if not description:
-            description = "这是一个植物，具有独特的能力来对抗僵尸。"
-
-        description_html = '<div class="desc-field">' + description + "</div>"
-        return description_html
-
-    def _get_plant_description(self, plant_name, extracted_description=None):
-        """Get short description for plant image container"""
-        # Use extracted description if available
-        if extracted_description:
-            # Extract first sentence or first 50 characters as short description
-            first_sentence = extracted_description.split("。")[0] + "。"
-            if len(first_sentence) > 80:
-                return extracted_description[:50] + "..."
-            return first_sentence
-
-        # Fallback to hardcoded descriptions
-        descriptions = {
-            "豌豆射手": "向僵尸发射豌豆",
-            "向日葵": "产生阳光",
-            "樱桃炸弹": "爆炸攻击范围内僵尸",
-            "坚果墙": "阻挡僵尸前进",
-            "雪花豌豆": "发射减速豌豆",
-            "连发豌豆": "连续发射两颗豌豆",
-        }
-        return descriptions.get(plant_name, "植物防御专家")
-
-    def _extract_description_from_page(self, data):
-        """Extract plant description from page content"""
-        page_content = data.get("page_content")
-        if not page_content:
+    def _find_names_tab(self, tabs):
+        """Dynamically find the names tab by looking for tab labels that suggest names"""
+        if not tabs:
             return None
 
-        # Look for meaningful paragraphs in the main content
-        paragraphs = page_content.find_all("p")
+        # First priority: exact matches for common name tab patterns
+        for tab_label, tab_data in tabs.items():
+            if "名称" in tab_label or "名字" in tab_label:
+                return tab_label, tab_data
 
-        for paragraph in paragraphs:
-            text = paragraph.get_text(strip=True)
-            # Skip very short paragraphs or those that seem to be navigation
-            if len(text) < 50:
+        # Second priority: tabs that contain mostly name-like fields
+        for tab_label, tab_data in tabs.items():
+            if not tab_data:
                 continue
-            # Skip paragraphs that look like infobox data
-            if any(keyword in text for keyword in ["阳光花费", "恢复时间", "伤害"]):
-                continue
-            # Look for paragraphs that actually describe the plant
-            if any(
-                keyword in text for keyword in ["植物", "射手", "豌豆", "发射", "攻击"]
-            ):
-                return text
+            # If most fields contain name-related characters, likely a names tab
+            name_field_count = sum(
+                1
+                for field in tab_data.keys()
+                if any(char in field for char in ["名", "英", "中", "文", "日"])
+            )
+            if name_field_count >= len(tab_data) * 0.5:  # At least 50% are name fields
+                return tab_label, tab_data
 
-        return None
-
-    def _get_plant_descriptions(self):
-        """Get detailed descriptions for plants (fallback when no real data)"""
-        return {
-            "豌豆射手": "这是一个植物，具有独特的能力来对抗僵尸。",
-        }
+        return None, None
 
     def _create_gamedata_tab(self, data):
-        """Create the game data tab content using real extracted data"""
+        """Create the game data tab content with real data"""
         fields = data.get("fields", {})
-        title = data.get("title", "")
+        tabs = data.get("tabs", {})
 
-        # Use real extracted data first, fallback to hardcoded data
-        if fields:
-            game_data_html = []
-            for label, value in fields.items():
-                # Skip name fields - they will be moved to the names section
-                if "英文名称" in label or "中文名称" in label:
-                    continue
-                row_html = (
-                    '<div class="game-data-row">'
-                    '<div class="data-label">' + label + "</div>"
-                    '<div class="data-value">' + value + "</div>"
-                    "</div>"
-                )
-                game_data_html.append(row_html)
-            return "".join(game_data_html)
-        else:
-            # Fallback to hardcoded data if no real data found
-            plant_data = self._get_plant_specific_data(title)
-            game_data_html = []
-            for label, value in plant_data.items():
-                row_html = (
-                    '<div class="game-data-row">'
-                    '<div class="data-label">' + label + "</div>"
-                    '<div class="data-value">' + value + "</div>"
-                    "</div>"
-                )
-                game_data_html.append(row_html)
-            return "".join(game_data_html)
+        # Look for user-friendly game data tab (like "图鉴描述")
+        # vs technical data tab (like "游戏数据")
+        target_tab = None
 
-    def _get_plant_specific_data(self, plant_name):
-        """Get specific game data for different plants (fallback for when no real data)"""
-        # Simple fallback data - real data is extracted in _extract_infobox_data
-        fallback_data = {
-            "阳光花费": "100",
-            "恢复时间": "7.5秒",
-            "伤害": "20",
-            "强度": "300",
-        }
-        return fallback_data
+        # Prefer tabs with user-friendly labels like "图鉴描述"
+        for tab_label, tab_data in tabs.items():
+            if "图鉴" in tab_label or "描述" in tab_label:
+                target_tab = tab_data
+                break
 
-    def _create_names_tab(self, data):
-        """Create the names tab content using real extracted names"""
-        fields = data.get("fields", {})
-        title = data.get("title", "")
+        # If no user-friendly tab, look for any non-names tab
+        if not target_tab:
+            # Find the names tab first so we can exclude it
+            names_tab_label, names_tab_data = self._find_names_tab(tabs)
+            names_tab_fields = set(names_tab_data.keys()) if names_tab_data else set()
 
-        # Extract real names from the data
-        names = self._extract_names_from_data(fields, title)
+            # Now find a tab that's not the names tab
+            for tab_label, tab_data in tabs.items():
+                if (
+                    tab_data
+                    and tab_label != names_tab_label
+                    and not any(field in names_tab_fields for field in tab_data.keys())
+                ):
+                    target_tab = tab_data
+                    break
 
-        names_html = (
-            '<div class="names-list">'
-            '<div class="name-row">'
-            '<div class="name-label">中文名称:</div>'
-            '<div class="name-value">' + names["chinese"] + "</div>"
-            "</div>"
-            '<div class="name-row">'
-            '<div class="name-label">英文名称:</div>'
-            '<div class="name-value">' + names["english"] + "</div>"
-            "</div>"
-        )
+        # Use flat fields for non-tabbed infoboxes
+        if not target_tab:
+            target_tab = fields
 
-        # Add Japanese name if available
-        if names.get("japanese"):
-            names_html += (
-                '<div class="name-row">'
-                '<div class="name-label">日文:</div>'
-                '<div class="name-value">' + names["japanese"] + "</div>"
-                "</div>"
+        # For flat fields, exclude any fields that appear to be from names tab
+        if target_tab == fields and tabs:
+            names_tab_label, names_tab_data = self._find_names_tab(tabs)
+            if names_tab_data:
+                names_fields = set(names_tab_data.keys())
+                target_tab = {k: v for k, v in fields.items() if k not in names_fields}
+
+        # Create field rows for display
+        field_rows = []
+
+        # Display all fields from the target tab
+        for field_name, value in target_tab.items():
+            field_rows.append(
+                f'<div class="data-row">'
+                f'<span class="data-label">{field_name}:</span>'
+                f'<span class="data-value">{value}</span>'
+                f"</div>"
             )
 
-        names_html += "</div>"
-        return names_html
+        return "\n".join(field_rows)
 
-    def _extract_names_from_data(self, fields, title):
-        """Extract real plant names from extracted data"""
-        names = {"chinese": title or "未知植物", "english": "", "japanese": ""}
+    def _create_names_tab(self, data):
+        """Create the names tab content with real data"""
+        fields = data.get("fields", {})
+        tabs = data.get("tabs", {})
+        title = data.get("title", "")
 
-        # Look for names in the extracted fields
-        for label, value in fields.items():
-            if "英文名称" in label or "英文" in label:
-                names["english"] = value
-            elif "中文名称" in label or "中文" in label:
-                names["chinese"] = value
-            elif "日文名称" in label or "日文" in label:
-                names["japanese"] = value
+        # Extract names using dynamic tab detection
+        names = self._extract_names_from_data(fields, title, tabs)
 
-        # Fallback to hardcoded names if no real names found
-        if not names["english"]:
-            hardcoded_names = self._get_plant_names()
-            if title in hardcoded_names:
-                fallback = hardcoded_names[title]
-                names["english"] = fallback.get("english", "Unknown")
-                if not names["japanese"]:
-                    names["japanese"] = fallback.get("japanese", "")
+        name_rows = []
 
+        # Display all name fields dynamically
+        for field_name, value in names.items():
+            if value:  # Only show fields with values
+                name_rows.append(
+                    f'<div class="name-row">'
+                    f'<span class="name-label">{field_name}:</span>'
+                    f'<span class="name-value">{value}</span>'
+                    f"</div>"
+                )
+
+        return "\n".join(name_rows)
+
+    def _extract_names_from_data(self, fields, title, tabs=None):
+        """Extract name information from data, now supporting dynamic tab detection"""
+        names = {}
+
+        # Look for dedicated names tab first
+        if tabs:
+            names_tab_label, names_tab_data = self._find_names_tab(tabs)
+
+            # If found names tab, use all its contents
+            if names_tab_data:
+                names.update(names_tab_data)
+                return names
+
+        # For non-tabbed infoboxes, just return empty dict
+        # We won't try to guess which fields are names
         return names
-
-    def _get_plant_names(self):
-        """Get plant names in different languages"""
-        return {
-            "豌豆射手": {
-                "chinese": "豌豆射手",
-                "english": "Peashooter",
-            },
-        }
 
     def _remove_svg_icons(self, soup):
         """Remove SVG icons from figure captions that cause spacing issues"""

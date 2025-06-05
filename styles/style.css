@@ -220,7 +220,7 @@ td {
 }
 
 /* Game Data Tab */
-.game-data-row {
+.data-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -234,6 +234,7 @@ td {
     font-weight: 600;
     color: #66d9ff;
     font-size: 0.9em;
+    width: 120px;
 }
 
 .data-value {
@@ -255,6 +256,7 @@ td {
     color: #66d9ff;
     font-weight: 600;
     font-size: 0.9em;
+    width: 120px;
 }
 
 .name-value {
@@ -430,7 +432,6 @@ figure {
 figcaption {
     color: #b8e6c1;
     font-style: italic;
-    margin-top: 8px;
     font-size: 0.9em;
 }
 
@@ -537,6 +538,7 @@ figure.thumb .thumbcaption {
 figure.thumb .caption {
     color: #66d9ff;
     font-weight: 500;
+    margin: 0;
 }
 
 /* Ensure proper spacing after figures */

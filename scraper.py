@@ -9,11 +9,76 @@ from bs4 import BeautifulSoup
 from pathlib import Path
 import sys
 import shutil
+import argparse
+import time
+import urllib.parse
+
 
 # Import our modules
 from utils.content_processor import ContentProcessor
 from utils.image_downloader import ImageDownloader
 from config import settings
+
+# Content type definitions for bulk downloads
+CONTENT_TYPES = {
+    "plants": [
+        "https://pvz.fandom.com/zh/wiki/豌豆射手",
+        "https://pvz.fandom.com/zh/wiki/向日葵",
+        "https://pvz.fandom.com/zh/wiki/樱桃炸弹",
+        "https://pvz.fandom.com/zh/wiki/坚果墙",
+        "https://pvz.fandom.com/zh/wiki/马铃薯地雷",
+        "https://pvz.fandom.com/zh/wiki/雪花豌豆",
+        "https://pvz.fandom.com/zh/wiki/大嘴花",
+        "https://pvz.fandom.com/zh/wiki/连发豌豆",
+        "https://pvz.fandom.com/zh/wiki/喷射蘑菇",
+        "https://pvz.fandom.com/zh/wiki/阳光蘑菇",
+        "https://pvz.fandom.com/zh/wiki/烟雾蘑菇",
+        "https://pvz.fandom.com/zh/wiki/墓碑破坏者",
+        "https://pvz.fandom.com/zh/wiki/催眠蘑菇",
+        "https://pvz.fandom.com/zh/wiki/胆小蘑菇",
+        "https://pvz.fandom.com/zh/wiki/冰蘑菇",
+        "https://pvz.fandom.com/zh/wiki/毁灭蘑菇",
+        "https://pvz.fandom.com/zh/wiki/睡莲叶",
+        "https://pvz.fandom.com/zh/wiki/倭瓜",
+        "https://pvz.fandom.com/zh/wiki/三线豌豆",
+        "https://pvz.fandom.com/zh/wiki/缠绕海带",
+        "https://pvz.fandom.com/zh/wiki/火爆辣椒",
+        "https://pvz.fandom.com/zh/wiki/荆棘草",
+        "https://pvz.fandom.com/zh/wiki/火炬木",
+        "https://pvz.fandom.com/zh/wiki/高坚果",
+        "https://pvz.fandom.com/zh/wiki/海蘑菇",
+        "https://pvz.fandom.com/zh/wiki/植物灯",
+        "https://pvz.fandom.com/zh/wiki/仙人掌",
+        "https://pvz.fandom.com/zh/wiki/三叶草",
+        "https://pvz.fandom.com/zh/wiki/分裂豌豆",
+        "https://pvz.fandom.com/zh/wiki/杨桃",
+        "https://pvz.fandom.com/zh/wiki/南瓜",
+        "https://pvz.fandom.com/zh/wiki/磁铁蘑菇",
+        "https://pvz.fandom.com/zh/wiki/卷心菜投手",
+        "https://pvz.fandom.com/zh/wiki/花盆",
+        "https://pvz.fandom.com/zh/wiki/玉米投手",
+        "https://pvz.fandom.com/zh/wiki/咖啡豆",
+        "https://pvz.fandom.com/zh/wiki/大蒜",
+        "https://pvz.fandom.com/zh/wiki/叶子保护伞",
+        "https://pvz.fandom.com/zh/wiki/金盏花",
+        "https://pvz.fandom.com/zh/wiki/西瓜投手",
+        "https://pvz.fandom.com/zh/wiki/机枪豌豆",
+        "https://pvz.fandom.com/zh/wiki/双子向日葵",
+        "https://pvz.fandom.com/zh/wiki/忧郁蘑菇",
+        "https://pvz.fandom.com/zh/wiki/香蒲",
+        "https://pvz.fandom.com/zh/wiki/「冬」瓜",
+        "https://pvz.fandom.com/zh/wiki/金磁铁",
+        "https://pvz.fandom.com/zh/wiki/荆棘石",
+        "https://pvz.fandom.com/zh/wiki/玉米大炮",
+        "https://pvz.fandom.com/zh/wiki/模仿者",
+        "https://pvz.fandom.com/zh/wiki/爆炸坚果",
+        "https://pvz.fandom.com/zh/wiki/巨型坚果墙",
+        "https://pvz.fandom.com/zh/wiki/苗",
+        "https://pvz.fandom.com/zh/wiki/金盏花苗",
+    ],
+    # Future expansion:
+    # 'zombies': [...],
+}
 
 
 class PvZWikiScraper:
@@ -106,7 +171,7 @@ class PvZWikiScraper:
             title=title, main_content=main_content, sidebar_content=sidebar_content
         )
 
-    def generate_filename(self, title, custom_filename=None):
+    def generate_filename(self, title, custom_filename=None, content_type=None):
         """Generate safe filename from title"""
         if custom_filename:
             return custom_filename
@@ -114,10 +179,28 @@ class PvZWikiScraper:
         safe_title = "".join(
             c for c in title if c.isalnum() or c in (" ", "-", "_")
         ).strip()
-        safe_title = safe_title.replace(" ", "_")[: settings.MAX_FILENAME_LENGTH]
+        max_len = settings.MAX_FILENAME_LENGTH
+        safe_title = safe_title.replace(" ", "_")[:max_len]
+
         return f"{safe_title}.html"
 
-    def scrape_page(self, url, output_filename=None):
+    def generate_filename_from_url(self, url, content_type=None):
+        """Generate filename from URL for bulk downloads"""
+        # Extract the wiki page name from URL
+        parsed = urllib.parse.urlparse(url)
+        page_name = parsed.path.split("/")[-1]
+        # URL decode the page name
+        page_name = urllib.parse.unquote(page_name)
+
+        # Create safe filename
+        allowed_chars = (" ", "-", "_", "「", "」")
+        safe_name = "".join(
+            c for c in page_name if c.isalnum() or c in allowed_chars
+        ).strip()
+
+        return f"{safe_name}.html"
+
+    def scrape_page(self, url, output_filename=None, content_type=None):
         """Main scraping function"""
         # Fetch the page
         html = self.fetch_page(url)
@@ -158,14 +241,23 @@ class PvZWikiScraper:
                 f"📸 Downloaded {stats['total_downloaded']} images to: {stats['images_dir']}"
             )
 
-        # Create final HTML
+        # Generate filename and output path first
+        if output_filename:
+            filename = output_filename
+        elif content_type:
+            filename = self.generate_filename_from_url(url, content_type)
+        else:
+            filename = self.generate_filename(title)
+
+        output_path = self.output_dir / filename
+
+        # Ensure directory exists for organized content
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # Create final HTML with consistent relative paths
         final_html = self.create_clean_html(
             title, main_content_html, sidebar_content_html
         )
-
-        # Generate filename and save
-        output_filename = self.generate_filename(title, output_filename)
-        output_path = self.output_dir / output_filename
 
         try:
             with open(output_path, "w", encoding="utf-8") as f:
@@ -176,29 +268,170 @@ class PvZWikiScraper:
             print(f"Error saving file: {e}")
             return False
 
+    def get_content_urls(self, content_type):
+        """Get URLs for a specific content type"""
+        return CONTENT_TYPES.get(content_type, [])
+
+    def scrape_bulk(self, content_type="plants", resume=False, delay=1.5):
+        """Bulk download pages for a specific content type"""
+        urls = self.get_content_urls(content_type)
+        if not urls:
+            print(f"❌ No URLs found for content type: {content_type}")
+            return False
+
+        total = len(urls)
+        success_count = 0
+        skipped_count = 0
+        failed_count = 0
+
+        print(f"🚀 Starting bulk download: {total} {content_type} pages")
+        print(f"📁 Output directory: {self.output_dir / content_type}")
+
+        for i, url in enumerate(urls, 1):
+            # Generate expected filename
+            expected_filename = self.generate_filename_from_url(url, content_type)
+            expected_path = self.output_dir / expected_filename
+
+            # Skip if file exists and resume mode is enabled
+            if resume and expected_path.exists():
+                print(f"[{i}/{total}] ⏭️  Skipping: {expected_path.name}")
+                skipped_count += 1
+                continue
+
+            print(f"\n[{i}/{total}] 📄 Processing: {url}")
+
+            # Scrape the page
+            success = self.scrape_page(url, content_type=content_type)
+
+            if success:
+                success_count += 1
+                print(f"[{i}/{total}] ✅ Completed: {expected_path.name}")
+            else:
+                failed_count += 1
+                print(f"[{i}/{total}] ❌ Failed: {url}")
+
+            # Rate limiting - be respectful to the server
+            if i < total:  # Don't delay after the last item
+                print(f"⏱️  Waiting {delay}s...")
+                time.sleep(delay)
+
+        # Summary report
+        print(f"\n📊 Bulk download complete!")
+        print(f"✅ Successful: {success_count}")
+        if skipped_count > 0:
+            print(f"⏭️  Skipped: {skipped_count}")
+        if failed_count > 0:
+            print(f"❌ Failed: {failed_count}")
+        print(f"📁 Files saved to: {self.output_dir / content_type}")
+
+        return failed_count == 0
+
+
+def create_argument_parser():
+    """Create and configure argument parser"""
+    parser = argparse.ArgumentParser(
+        description="PvZ Wiki Scraper - Download wiki pages",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Single page download
+  python scraper.py "https://pvz.fandom.com/zh/wiki/豌豆射手"
+  python scraper.py "https://pvz.fandom.com/zh/wiki/豌豆射手" custom_name.html
+  
+  # Bulk downloads  
+  python scraper.py --all                    # Download all plants
+  python scraper.py --plants                 # Download plants explicitly
+  python scraper.py --all --resume           # Skip existing files
+  python scraper.py --plants --delay 2       # Custom delay between requests
+        """,
+    )
+
+    # Single page mode (positional arguments)
+    parser.add_argument(
+        "url", nargs="?", help="Wiki URL to scrape (for single page mode)"
+    )
+    parser.add_argument(
+        "output_filename", nargs="?", help="Custom output filename (optional)"
+    )
+
+    # Bulk download modes
+    parser.add_argument(
+        "--all", action="store_true", help="Download all content (currently: plants)"
+    )
+    parser.add_argument(
+        "--plants", action="store_true", help="Download all plant pages"
+    )
+
+    # Bulk download options
+    parser.add_argument(
+        "--resume",
+        action="store_true",
+        help="Skip files that already exist (for bulk downloads)",
+    )
+    parser.add_argument(
+        "--delay",
+        type=float,
+        default=1.5,
+        help="Delay between requests in seconds (default: 1.5)",
+    )
+
+    return parser
+
 
 def main():
     """Main function to run the scraper"""
-    if len(sys.argv) < 2:
-        print("Usage: python scraper.py <wiki_url> [output_filename]")
-        print(
-            "Example: python scraper.py "
-            "'https://pvz.fandom.com/zh/wiki/%E8%B1%8C%E8%B1%86%E5%B0%84%E6%89%8B'"
-        )
+    parser = create_argument_parser()
+
+    # Handle legacy usage (no arguments)
+    if len(sys.argv) == 1:
+        parser.print_help()
         return
 
-    url = sys.argv[1]
-    output_filename = sys.argv[2] if len(sys.argv) > 2 else None
+    # Check for legacy positional arguments (backward compatibility)
+    if len(sys.argv) >= 2 and not sys.argv[1].startswith("--"):
+        # Legacy mode: python scraper.py <url> [filename]
+        url = sys.argv[1]
+        output_filename = sys.argv[2] if len(sys.argv) > 2 else None
 
+        scraper = PvZWikiScraper()
+        print(f"Starting scrape of: {url}")
+        success = scraper.scrape_page(url, output_filename)
+
+        if success:
+            print("✅ Scraping completed successfully!")
+        else:
+            print("❌ Scraping failed!")
+        return
+
+    # Parse modern command line arguments
+    args = parser.parse_args()
     scraper = PvZWikiScraper()
 
-    print(f"Starting scrape of: {url}")
-    success = scraper.scrape_page(url, output_filename)
+    # Determine mode and execute
+    if args.all or args.plants:
+        # Bulk download mode
+        content_type = "plants"  # For now, --all defaults to plants
+        print("🔄 Bulk download mode: " + content_type)
+        success = scraper.scrape_bulk(
+            content_type=content_type, resume=args.resume, delay=args.delay
+        )
 
-    if success:
-        print("✅ Scraping completed successfully!")
+        if success:
+            print("✅ Bulk scraping completed successfully!")
+        else:
+            print("⚠️  Bulk scraping completed with some failures!")
+
+    elif args.url:
+        # Single page mode
+        print(f"Starting scrape of: {args.url}")
+        success = scraper.scrape_page(args.url, args.output_filename)
+
+        if success:
+            print("✅ Scraping completed successfully!")
+        else:
+            print("❌ Scraping failed!")
     else:
-        print("❌ Scraping failed!")
+        parser.print_help()
 
 
 if __name__ == "__main__":
