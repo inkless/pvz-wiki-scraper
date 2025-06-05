@@ -4,151 +4,54 @@ Generate index.html with dynamic plant list from docs directory
 """
 
 import os
-import glob
 import json
 from datetime import datetime
 from string import Template
 
 
-def get_content_list_with_images(output_dir="docs", content_type="plants"):
-    """Get list of all content data from metadata file or fallback to HTML parsing"""
+def get_all_content_with_types(output_dir="docs"):
+    """Get list of all content (plants and zombies) with content type information"""
     metadata_file = os.path.join(output_dir, "content_metadata.json")
 
-    # Try to load from metadata file first
-    if os.path.exists(metadata_file):
-        try:
-            with open(metadata_file, "r", encoding="utf-8") as f:
-                metadata = json.load(f)
+    if not os.path.exists(metadata_file):
+        raise FileNotFoundError(f"Metadata file not found: {metadata_file}")
 
-            # Convert metadata dict to list format and filter by content type
-            content_items = []
-            for item_name, item_data in metadata.items():
-                if item_data.get("content_type", "plants") == content_type:
-                    content_items.append(
-                        {"name": item_name, "image": item_data.get("image")}
-                    )
-
-            print(f"Loaded {len(content_items)} {content_type} from metadata file")
-            return content_items
-
-        except (json.JSONDecodeError, IOError) as e:
-            print(f"Warning: Could not load metadata file: {e}")
-            print("Falling back to HTML parsing...")
-
-    # Fallback to HTML parsing if metadata file doesn't exist or is invalid
-    return get_content_list_from_html(output_dir, content_type)
-
-
-def get_content_list_from_html(output_dir="docs", content_type="plants"):
-    """Fallback method: Get list of all plant HTML files with their main images"""
     try:
-        from bs4 import BeautifulSoup  # noqa: F401
-    except ImportError:
-        print("Warning: BeautifulSoup not available, returning plants without images")
-        return get_content_list_names_only(output_dir, content_type)
+        with open(metadata_file, "r", encoding="utf-8") as f:
+            metadata = json.load(f)
 
-    html_files = glob.glob(os.path.join(output_dir, "*.html"))
+        # Convert all metadata to list format with content type
+        content_items = []
+        for item_name, item_data in metadata.items():
+            content_items.append(
+                {
+                    "name": item_name,
+                    "image": item_data.get("image"),
+                    "content_type": item_data.get("content_type", "plants"),
+                }
+            )
 
-    # Filter out test files and index.html, extract plant names and images
-    plants = []
-    for file_path in html_files:
-        filename = os.path.basename(file_path)
-        plant_name = filename.replace(".html", "")
+        print(f"Loaded {len(content_items)} total content items from metadata file")
+        return content_items
 
-        # Skip test files and index
-        if plant_name.startswith("test_") or plant_name == "index":
-            continue
-
-        # Extract main plant image from the HTML file
-        image_path = extract_plant_image(file_path)
-
-        plants.append({"name": plant_name, "image": image_path})
-
-    print(f"Loaded {len(plants)} plants from HTML parsing")
-    return plants
-
-
-def get_content_list_names_only(output_dir="docs", content_type="plants"):
-    """Minimal fallback: Get plant names only without images"""
-    html_files = glob.glob(os.path.join(output_dir, "*.html"))
-
-    plants = []
-    for file_path in html_files:
-        filename = os.path.basename(file_path)
-        plant_name = filename.replace(".html", "")
-
-        # Skip test files and index
-        if plant_name.startswith("test_") or plant_name == "index":
-            continue
-
-        plants.append({"name": plant_name, "image": None})
-
-    print(f"Loaded {len(plants)} plants (names only)")
-    return plants
-
-
-def extract_plant_image(html_file_path):
-    """Extract the main plant image from an HTML file"""
-    try:
-        from bs4 import BeautifulSoup
-
-        with open(html_file_path, "r", encoding="utf-8") as f:
-            content = f.read()
-
-        soup = BeautifulSoup(content, "html.parser")
-
-        # Look for the plant image in the infobox
-        plant_image = soup.find("img", class_="plant-image")
-        if plant_image and plant_image.get("src"):
-            # Remove the './' prefix if present
-            image_src = plant_image["src"]
-            if image_src.startswith("./"):
-                image_src = image_src[2:]
-            return image_src
-
-        # Fallback: look for any image in the images directory
-        images = soup.find_all("img")
-        for img in images:
-            src = img.get("src", "")
-            if "images/" in src and not src.endswith(
-                ".jpg"
-            ):  # Prefer PNG icons over JPG photos
-                if src.startswith("./"):
-                    src = src[2:]
-                return src
-
-        return None
-
-    except Exception as e:
-        print(f"Error extracting image from {html_file_path}: {e}")
-        return None
-
-
-def get_plant_list(output_dir="docs"):
-    """Legacy function for backwards compatibility"""
-    plants_with_images = get_content_list_with_images(output_dir, "plants")
-    return [plant["name"] for plant in plants_with_images]
-
-
-def get_plant_list_with_images(output_dir="docs"):
-    """Legacy function for backwards compatibility"""
-    return get_content_list_with_images(output_dir, "plants")
+    except (json.JSONDecodeError, IOError) as e:
+        raise RuntimeError(f"Could not load metadata file: {e}")
 
 
 def load_template(template_path="templates/index_template.html"):
     """Load HTML template from file"""
-    try:
-        with open(template_path, "r", encoding="utf-8") as f:
-            return f.read()
-    except FileNotFoundError:
+    if not os.path.exists(template_path):
         raise FileNotFoundError(
             f"Template file not found: {template_path}. "
             "Please ensure the templates directory exists."
         )
 
+    with open(template_path, "r", encoding="utf-8") as f:
+        return f.read()
 
-def generate_index_html(plants_data, output_path="docs/index.html"):
-    """Generate index.html with the plant list using template"""
+
+def generate_index_html(content_data, output_path="docs/index.html"):
+    """Generate index.html with the content list using template"""
 
     # Load template
     template_content = load_template()
@@ -157,20 +60,50 @@ def generate_index_html(plants_data, output_path="docs/index.html"):
     # Prepare template variables
     last_updated = datetime.now().strftime("%Y-%m-%d %H:%M:%S UTC")
 
-    # Convert plants data to format expected by JavaScript
-    if plants_data and isinstance(plants_data[0], dict):
-        # New format with images
-        plant_count = len(plants_data)
-        plant_list_json = json.dumps(plants_data, ensure_ascii=False, indent=8)
+    # Count plants and zombies from content data
+    plant_count = 0
+    zombie_count = 0
+
+    # Prepare data for JavaScript (remove content_type for frontend)
+    js_content_data = []
+
+    for item in content_data:
+        # Count by content type
+        content_type = item.get("content_type", "plants")
+        if content_type == "plants":
+            plant_count += 1
+        elif content_type == "zombies":
+            zombie_count += 1
+
+        # Prepare data for JavaScript (include content_type for better grouping)
+        js_item = {
+            "name": item["name"],
+            "image": item.get("image"),
+            "content_type": content_type,
+        }
+        js_content_data.append(js_item)
+
+    plant_list_json = json.dumps(js_content_data, ensure_ascii=False, indent=8)
+
+    # Generate appropriate stats text based on content
+    if zombie_count > 0 and plant_count > 0:
+        # Combined index
+        stats_text = (
+            f'<p>共收录 <span class="content-type-count">{plant_count}</span> 种植物和 '
+            f'<span class="content-type-count">{zombie_count}</span> 种僵尸</p>'
+        )
+    elif zombie_count > 0:
+        # Zombies only
+        stats_text = f'<p>共收录 <span class="content-type-count">{zombie_count}</span> 种僵尸</p>'
     else:
-        # Legacy format (just names)
-        plant_count = len(plants_data)
-        plants_data = [{"name": name, "image": None} for name in plants_data]
-        plant_list_json = json.dumps(plants_data, ensure_ascii=False, indent=8)
+        # Plants only (or legacy)
+        stats_text = f'<p>共收录 <span class="content-type-count">{plant_count}</span> 种植物</p>'
 
     # Replace template placeholders using substitute
     html_content = template.substitute(
         plant_count=plant_count,
+        zombie_count=zombie_count,
+        stats_text=stats_text,
         plant_list_json=plant_list_json,
         last_updated=last_updated,
     )
@@ -182,10 +115,24 @@ def generate_index_html(plants_data, output_path="docs/index.html"):
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(html_content)
 
-    print(f"Generated index.html with {plant_count} plants")
+    if zombie_count > 0:
+        print(
+            f"Generated index.html with {plant_count} plants and {zombie_count} zombies"
+        )
+    else:
+        print(f"Generated index.html with {plant_count} plants")
     return output_path
 
 
+def generate_combined_index_html(output_dir="docs", output_path="docs/index.html"):
+    """Generate combined index.html with both plants and zombies"""
+
+    # Get all content with content type information
+    all_content = get_all_content_with_types(output_dir)
+
+    # Generate index with automatic counting
+    return generate_index_html(all_content, output_path)
+
+
 if __name__ == "__main__":
-    plants = get_content_list_with_images("docs", "plants")
-    generate_index_html(plants)
+    generate_combined_index_html()

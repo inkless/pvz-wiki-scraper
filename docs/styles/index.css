@@ -1,0 +1,346 @@
+/* Index page specific styles */
+
+.content-section {
+    margin-bottom: 50px;
+}
+
+.category-heading {
+    text-align: center;
+    margin: 40px 0 30px 0;
+    padding: 20px;
+    background: linear-gradient(135deg, #f8fff8, #e8f5e8);
+    border-radius: 15px;
+    border: 2px solid #e0f2e0;
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.1);
+}
+
+.category-heading h2 {
+    margin: 0;
+    color: #2E7D32;
+    font-size: 2.2em;
+    font-weight: 700;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.category-heading .category-count {
+    color: #4CAF50;
+    font-size: 1.1em;
+    font-weight: 600;
+    margin-top: 8px;
+}
+
+.category-heading.zombies {
+    background: linear-gradient(135deg, #fff8f8, #f5e8e8);
+    border-color: #f2e0e0;
+    box-shadow: 0 4px 15px rgba(175, 76, 76, 0.1);
+}
+
+.category-heading.zombies h2 {
+    color: #7D2E2E;
+}
+
+.category-heading.zombies .category-count {
+    color: #AF4C4C;
+}
+
+.plant-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 20px;
+    padding: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.plant-card {
+    background: linear-gradient(145deg, #ffffff, #f8f9fa);
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+    padding: 0;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    overflow: hidden;
+    position: relative;
+    height: 300px;
+    display: flex;
+    flex-direction: column;
+}
+
+.plant-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 12px 35px rgba(76, 175, 80, 0.25);
+    border-color: #4CAF50;
+}
+
+.plant-card.zombie:hover {
+    box-shadow: 0 12px 35px rgba(175, 76, 76, 0.25);
+    border-color: #AF4C4C;
+}
+
+.plant-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, 
+        rgba(76, 175, 80, 0.08) 0%, 
+        rgba(139, 195, 74, 0.08) 50%, 
+        rgba(76, 175, 80, 0.08) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 1;
+}
+
+.plant-card.zombie::before {
+    background: linear-gradient(135deg, 
+        rgba(175, 76, 76, 0.08) 0%, 
+        rgba(195, 74, 74, 0.08) 50%, 
+        rgba(175, 76, 76, 0.08) 100%);
+}
+
+.plant-card:hover::before {
+    opacity: 1;
+}
+
+.plant-image-container {
+    position: relative;
+    height: 200px;
+    background: linear-gradient(135deg, #f0f8f0, #e8f5e8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    z-index: 2;
+    border-bottom: 1px solid #e0e8e0;
+}
+
+.plant-card.zombie .plant-image-container {
+    background: linear-gradient(135deg, #f8f0f0, #f5e8e8);
+    border-bottom-color: #f2e0e0;
+}
+
+.plant-icon {
+    width: 140px;
+    height: 140px;
+    object-fit: cover;
+    border-radius: 16px;
+    transition: all 0.3s ease;
+    filter: drop-shadow(0 3px 10px rgba(0,0,0,0.15));
+}
+
+.plant-card:hover .plant-icon {
+    transform: scale(1.08);
+    filter: drop-shadow(0 5px 15px rgba(0,0,0,0.2));
+}
+
+.plant-info {
+    padding: 20px;
+    text-align: center;
+    background: white;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+    z-index: 2;
+}
+
+.plant-name {
+    font-size: 1.3em;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: #1b5e20;
+    text-shadow: none;
+    line-height: 1.2;
+}
+
+.plant-card.zombie .plant-name {
+    color: #5e1b1b;
+}
+
+.plant-description {
+    color: #4a5568;
+    font-size: 0.9em;
+    font-weight: 500;
+    opacity: 0.85;
+}
+
+.plant-placeholder {
+    width: 140px;
+    height: 140px;
+    background: linear-gradient(135deg, #e8e8e8, #f5f5f5);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #888;
+    font-size: 3em;
+    border: 2px dashed #ccc;
+    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.1));
+}
+
+.header {
+    text-align: center;
+    padding: 50px 20px;
+    background: linear-gradient(135deg, #4CAF50, #2E7D32, #1B5E20);
+    color: white;
+    margin-bottom: 40px;
+    position: relative;
+    overflow: hidden;
+}
+
+.header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20"><defs><radialGradient id="a" cx="50%" cy="0%" r="100%"><stop offset="0%" stop-color="%23fff" stop-opacity=".1"/><stop offset="100%" stop-color="%23fff" stop-opacity="0"/></radialGradient></defs><rect width="100" height="20" fill="url(%23a)"/></svg>');
+    opacity: 0.1;
+}
+
+.header h1 {
+    margin: 0;
+    font-size: 3em;
+    margin-bottom: 15px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    position: relative;
+    z-index: 1;
+}
+
+.header p {
+    margin: 10px 0 0 0;
+    opacity: 0.9;
+    font-size: 1.2em;
+    position: relative;
+    z-index: 1;
+}
+
+.search-box {
+    max-width: 500px;
+    margin: 30px auto;
+    position: relative;
+    z-index: 1;
+}
+
+.search-box input {
+    width: 100%;
+    padding: 15px 25px;
+    border: 3px solid rgba(255,255,255,0.3);
+    border-radius: 50px;
+    font-size: 16px;
+    outline: none;
+    transition: all 0.3s ease;
+    background: rgba(255,255,255,0.9);
+    backdrop-filter: blur(10px);
+}
+
+.search-box input:focus {
+    border-color: rgba(255,255,255,0.8);
+    background: white;
+    transform: scale(1.02);
+}
+
+.stats {
+    text-align: center;
+    margin: 40px auto;
+    color: #4CAF50;
+    background: linear-gradient(135deg, #f8fff8, #e8f5e8);
+    padding: 25px;
+    border-radius: 15px;
+    max-width: 600px;
+    border: 2px solid #e0f2e0;
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.1);
+}
+
+.stats p {
+    margin: 0;
+    font-size: 1.2em;
+    font-weight: 600;
+    color: #4CAF50;
+}
+
+.content-type-count {
+    color: #2E7D32;
+    font-weight: 700;
+}
+
+/* Footer styles are in the main CSS file */
+.no-results {
+    text-align: center;
+    padding: 80px 20px;
+    color: #999;
+    font-size: 1.2em;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .plant-grid {
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        padding: 15px;
+        gap: 15px;
+    }
+    .plant-card {
+        height: 280px;
+    }
+    .plant-image-container {
+        height: 180px;
+    }
+    .plant-icon {
+        width: 120px;
+        height: 120px;
+    }
+    .plant-placeholder {
+        width: 120px;
+        height: 120px;
+        font-size: 2.5em;
+    }
+    .header h1 {
+        font-size: 2.2em;
+    }
+    .header p {
+        font-size: 1em;
+    }
+    .category-heading h2 {
+        font-size: 1.8em;
+    }
+}
+
+@media (max-width: 480px) {
+    .plant-grid {
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 12px;
+    }
+    .plant-card {
+        height: 260px;
+    }
+    .plant-image-container {
+        height: 160px;
+    }
+    .plant-icon {
+        width: 100px;
+        height: 100px;
+    }
+    .plant-placeholder {
+        width: 100px;
+        height: 100px;
+        font-size: 2.2em;
+    }
+    .plant-info {
+        padding: 15px;
+    }
+    .plant-name {
+        font-size: 1.1em;
+    }
+    .plant-description {
+        font-size: 0.8em;
+    }
+    .category-heading h2 {
+        font-size: 1.6em;
+    }
+} 
