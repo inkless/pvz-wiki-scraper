@@ -417,6 +417,14 @@ td {
     box-shadow: 0 8px 24px rgba(0,0,0,0.4);
 }
 
+.almanac-plant-image {
+    text-align: center;
+}
+
+.almanac-plant-image img {
+    border-radius: 12px;
+}
+
 .almanac-plant-title {
     font-size: 1.4em;
     font-weight: 700;
@@ -539,9 +547,6 @@ figcaption {
 /* ================== MEDIAWIKI FIGURE FIXES ================== */
 /* Override MediaWiki figure floats to prevent height issues */
 figure.thumb {
-    float: none !important;
-    margin: 1.5em auto;
-    clear: both;
     display: block;
     max-width: 300px;
     background: rgba(20, 40, 50, 0.6);
@@ -552,8 +557,9 @@ figure.thumb {
 
 figure.thumb.mw-halign-left,
 figure.thumb.mw-halign-right {
-    float: none !important;
-    margin: 1.5em auto;
+    float: left;
+    margin: 0 1.4em 1.3em 0;
+    clear: both;
 }
 
 figure.thumb img {

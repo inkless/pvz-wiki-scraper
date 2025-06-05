@@ -40,6 +40,9 @@ UNWANTED_SELECTORS = [
     ".stub",
     ".ambox",
     ".mbox",
+    # Other filters
+    ".pi-title-image",
+    ".navbox-div .navbar ul",
 ]
 
 # Sidebar content selectors

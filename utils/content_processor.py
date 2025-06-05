@@ -34,9 +34,12 @@ class ContentProcessor:
         # Convert internal wiki links to local HTML files
         self._convert_wiki_links(cleaned)
 
-        # Remove empty paragraphs and divs
+        # Remove empty paragraphs and divs (but preserve divs with images)
         for tag in cleaned.find_all(["p", "div"]):
             if not tag.get_text(strip=True):
+                # Don't remove divs that contain images, even if they have no text
+                if tag.name == "div" and tag.find("img"):
+                    continue
                 tag.decompose()
 
         # Extract and process infobox data
@@ -183,7 +186,6 @@ class ContentProcessor:
                 # Find the next content until the next heading
                 current_level = int(heading.name[1])
                 element = heading.next_sibling
-                first_ul_removed = False
 
                 while element:
                     if (
@@ -193,14 +195,6 @@ class ContentProcessor:
                         and int(element.name[1]) <= current_level
                     ):
                         break
-
-                    # Remove the first ul element we encounter
-                    if element.name == "ul" and not first_ul_removed:
-                        next_element = element.next_sibling
-                        element.decompose()
-                        element = next_element
-                        first_ul_removed = True
-                        continue
 
                     # Remove .navbar divs in this section
                     if hasattr(element, "find_all"):

@@ -25,8 +25,6 @@ def get_plant_list_with_images(output_dir="docs"):
             for plant_name, plant_data in metadata.items():
                 plants.append({"name": plant_name, "image": plant_data.get("image")})
 
-            # Sort plants alphabetically by name
-            plants.sort(key=lambda x: x["name"])
             print(f"Loaded {len(plants)} plants from metadata file")
             return plants
 
@@ -63,8 +61,6 @@ def get_plant_list_from_html(output_dir="docs"):
 
         plants.append({"name": plant_name, "image": image_path})
 
-    # Sort plants alphabetically by name
-    plants.sort(key=lambda x: x["name"])
     print(f"Loaded {len(plants)} plants from HTML parsing")
     return plants
 
@@ -84,8 +80,6 @@ def get_plant_list_names_only(output_dir="docs"):
 
         plants.append({"name": plant_name, "image": None})
 
-    # Sort plants alphabetically by name
-    plants.sort(key=lambda x: x["name"])
     print(f"Loaded {len(plants)} plants (names only)")
     return plants
 
