@@ -263,5 +263,10 @@
     "name": "金盏花苗",
     "image": "images/image_fa66df91.png",
     "last_updated": "2025-06-05 00:49:20 UTC"
+  },
+  "僵尸": {
+    "name": "僵尸",
+    "image": "images/image_45cc2e31.png",
+    "last_updated": "2025-06-05 14:33:43 UTC"
   }
 }

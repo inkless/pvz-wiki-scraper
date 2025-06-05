@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>植物大战僵尸图鉴</title>
+    <meta name="description" content="植物大战僵尸图鉴 - 完整的资料库">
+    <link rel="stylesheet" href="./styles/style.css">
+    <style>
+        .plant-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .plant-card {
+            background: linear-gradient(145deg, #ffffff, #f8f9fa);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+            padding: 0;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            overflow: hidden;
+            position: relative;
+            height: 300px;
+            display: flex;
+            flex-direction: column;
+        }
+        .plant-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 12px 35px rgba(76, 175, 80, 0.25);
+            border-color: #4CAF50;
+        }
+        .plant-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, 
+                rgba(76, 175, 80, 0.08) 0%, 
+                rgba(139, 195, 74, 0.08) 50%, 
+                rgba(76, 175, 80, 0.08) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 1;
+        }
+        .plant-card:hover::before {
+            opacity: 1;
+        }
+        .plant-image-container {
+            position: relative;
+            height: 200px;
+            background: linear-gradient(135deg, #f0f8f0, #e8f5e8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            z-index: 2;
+            border-bottom: 1px solid #e0e8e0;
+        }
+        .plant-icon {
+            width: 140px;
+            height: 140px;
+            object-fit: cover;
+            border-radius: 16px;
+            transition: all 0.3s ease;
+            filter: drop-shadow(0 3px 10px rgba(0,0,0,0.15));
+        }
+        .plant-card:hover .plant-icon {
+            transform: scale(1.08);
+            filter: drop-shadow(0 5px 15px rgba(0,0,0,0.2));
+        }
+        .plant-info {
+            padding: 20px;
+            text-align: center;
+            background: white;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+            z-index: 2;
+        }
+        .plant-name {
+            font-size: 1.3em;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #1b5e20;
+            text-shadow: none;
+            line-height: 1.2;
+        }
+        .plant-description {
+            color: #4a5568;
+            font-size: 0.9em;
+            font-weight: 500;
+            opacity: 0.85;
+        }
+        .plant-placeholder {
+            width: 140px;
+            height: 140px;
+            background: linear-gradient(135deg, #e8e8e8, #f5f5f5);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #888;
+            font-size: 3em;
+            border: 2px dashed #ccc;
+            filter: drop-shadow(0 2px 8px rgba(0,0,0,0.1));
+        }
+        .header {
+            text-align: center;
+            padding: 50px 20px;
+            background: linear-gradient(135deg, #4CAF50, #2E7D32, #1B5E20);
+            color: white;
+            margin-bottom: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20"><defs><radialGradient id="a" cx="50%" cy="0%" r="100%"><stop offset="0%" stop-color="%23fff" stop-opacity=".1"/><stop offset="100%" stop-color="%23fff" stop-opacity="0"/></radialGradient></defs><rect width="100" height="20" fill="url(%23a)"/></svg>');
+            opacity: 0.1;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 3em;
+            margin-bottom: 15px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 1;
+        }
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+            font-size: 1.2em;
+            position: relative;
+            z-index: 1;
+        }
+        .search-box {
+            max-width: 500px;
+            margin: 30px auto;
+            position: relative;
+            z-index: 1;
+        }
+        .search-box input {
+            width: 100%;
+            padding: 15px 25px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50px;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+            background: rgba(255,255,255,0.9);
+            backdrop-filter: blur(10px);
+        }
+        .search-box input:focus {
+            border-color: rgba(255,255,255,0.8);
+            background: white;
+            transform: scale(1.02);
+        }
+        .stats {
+            text-align: center;
+            margin: 40px auto;
+            color: #4CAF50;
+            background: linear-gradient(135deg, #f8fff8, #e8f5e8);
+            padding: 25px;
+            border-radius: 15px;
+            max-width: 600px;
+            border: 2px solid #e0f2e0;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.1);
+        }
+        .stats p {
+            margin: 0;
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #4CAF50;
+        }
+        /* Footer styles are in the main CSS file */
+        .no-results {
+            text-align: center;
+            padding: 80px 20px;
+            color: #999;
+            font-size: 1.2em;
+        }
+        
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .plant-grid {
+                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+                padding: 15px;
+                gap: 15px;
+            }
+            .plant-card {
+                height: 280px;
+            }
+            .plant-image-container {
+                height: 180px;
+            }
+            .plant-icon {
+                width: 120px;
+                height: 120px;
+            }
+            .plant-placeholder {
+                width: 120px;
+                height: 120px;
+                font-size: 2.5em;
+            }
+            .header h1 {
+                font-size: 2.2em;
+            }
+            .header p {
+                font-size: 1em;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .plant-grid {
+                grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+                gap: 12px;
+            }
+            .plant-card {
+                height: 260px;
+            }
+            .plant-image-container {
+                height: 160px;
+            }
+            .plant-icon {
+                width: 100px;
+                height: 100px;
+            }
+            .plant-placeholder {
+                width: 100px;
+                height: 100px;
+                font-size: 2.2em;
+            }
+            .plant-info {
+                padding: 15px;
+            }
+            .plant-name {
+                font-size: 1.1em;
+            }
+            .plant-description {
+                font-size: 0.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🌱 植物大战僵尸图鉴</h1>
+        <p>探索所有植物的详细资料和游戏数据</p>
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="搜索植物名称...">
+        </div>
+    </div>
+
+    <div class="stats">
+        <p>共收录 <span id="plantCount">53</span> 种植物</p>
+    </div>
+
+    <div class="plant-grid" id="plantGrid">
+        <!-- Plants will be loaded here -->
+    </div>
+
+    <div class="no-results" id="noResults" style="display: none;">
+        <p>🔍 没有找到匹配的植物</p>
+        <p>请尝试其他搜索关键词</p>
+    </div>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>关于图鉴</h3>
+                <p>这是一个植物大战僵尸的综合植物图鉴，收录了游戏中所有植物的详细信息。</p>
+                <div class="footer-stats">
+                    <span>🌱 收录植物: 53种</span>
+                    <span>📊 数据完整度: 100%</span>
+                </div>
+            </div>
+            
+            <div class="footer-section">
+                <h3>快速导航</h3>
+                <ul class="footer-links">
+                    <li><a href="#search">搜索植物</a></li>
+                    <li><a href="./豌豆射手.html">热门植物</a></li>
+                    <li><a href="./向日葵.html">经济植物</a></li>
+                    <li><a href="./坚果墙.html">防御植物</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-section">
+                <h3>数据来源</h3>
+                <p><a href="https://plantsvszombies.fandom.com/zh/wiki/" target="_blank" rel="noopener">植物大战僵尸中文维基</a></p>
+                <p class="footer-disclaimer">本站仅作学习交流使用，所有内容版权归原作者所有</p>
+            </div>
+            
+            <div class="footer-section">
+                <h3>项目信息</h3>
+                <p>开源项目 · 持续更新</p>
+                <div class="footer-meta">
+                    <div>最后更新: 2025-06-05 14:46:00 UTC</div>
+                    <div>版本: v1.0</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer-bottom">
+            <div class="footer-bottom-content">
+                <p>&copy; 2024 植物大战僵尸图鉴 · 基于开源数据构建</p>
+                <div class="footer-badges">
+                    <span class="badge">📱 响应式设计</span>
+                    <span class="badge">⚡ 快速加载</span>
+                    <span class="badge">🔍 搜索友好</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const plantList = [
+        {
+                "name": "豌豆射手",
+                "image": "images/image_f9d4957c.png"
+        },
+        {
+                "name": "向日葵",
+                "image": "images/image_94f81fb4.png"
+        },
+        {
+                "name": "樱桃炸弹",
+                "image": "images/image_e1795369.png"
+        },
+        {
+                "name": "坚果墙",
+                "image": "images/image_e19a9bf5.png"
+        },
+        {
+                "name": "马铃薯地雷",
+                "image": "images/image_d948253b.png"
+        },
+        {
+                "name": "雪花豌豆",
+                "image": "images/image_efe98e51.png"
+        },
+        {
+                "name": "大嘴花",
+                "image": "images/image_0927c3fe.png"
+        },
+        {
+                "name": "连发豌豆",
+                "image": "images/image_71f3f571.png"
+        },
+        {
+                "name": "喷射蘑菇",
+                "image": null
+        },
+        {
+                "name": "阳光蘑菇",
+                "image": "images/image_157c452f.png"
+        },
+        {
+                "name": "烟雾蘑菇",
+                "image": "images/image_aebdcd7a.png"
+        },
+        {
+                "name": "墓碑破坏者",
+                "image": "images/image_2d617428.png"
+        },
+        {
+                "name": "催眠蘑菇",
+                "image": "images/image_2322d7b2.png"
+        },
+        {
+                "name": "胆小蘑菇",
+                "image": "images/image_a58b697b.png"
+        },
+        {
+                "name": "冰蘑菇",
+                "image": "images/image_f4db253b.png"
+        },
+        {
+                "name": "毁灭蘑菇",
+                "image": "images/image_dba3b0d6.png"
+        },
+        {
+                "name": "睡莲叶",
+                "image": "images/image_96484056.png"
+        },
+        {
+                "name": "倭瓜",
+                "image": "images/image_72f536b6.png"
+        },
+        {
+                "name": "三线豌豆",
+                "image": "images/image_9b3674c6.png"
+        },
+        {
+                "name": "缠绕海带",
+                "image": "images/image_5e6cab20.png"
+        },
+        {
+                "name": "火爆辣椒",
+                "image": "images/image_279f517b.png"
+        },
+        {
+                "name": "荆棘草",
+                "image": "images/image_9cd62014.png"
+        },
+        {
+                "name": "火炬木",
+                "image": "images/image_98c82795.png"
+        },
+        {
+                "name": "高坚果",
+                "image": "images/image_6263f1b4.png"
+        },
+        {
+                "name": "海蘑菇",
+                "image": "images/image_b75068e5.png"
+        },
+        {
+                "name": "植物灯",
+                "image": "images/image_2ee53e9e.png"
+        },
+        {
+                "name": "仙人掌",
+                "image": "images/image_619cc407.png"
+        },
+        {
+                "name": "三叶草",
+                "image": "images/image_32db4188.png"
+        },
+        {
+                "name": "分裂豌豆",
+                "image": "images/image_7fed0a81.png"
+        },
+        {
+                "name": "杨桃",
+                "image": "images/image_a040bc87.png"
+        },
+        {
+                "name": "南瓜",
+                "image": "images/image_34b8311d.png"
+        },
+        {
+                "name": "磁铁蘑菇",
+                "image": "images/image_86c78920.png"
+        },
+        {
+                "name": "卷心菜投手",
+                "image": "images/image_81f4e58a.png"
+        },
+        {
+                "name": "花盆",
+                "image": "images/image_e0a7cf96.png"
+        },
+        {
+                "name": "玉米投手",
+                "image": "images/image_bc6eb770.png"
+        },
+        {
+                "name": "咖啡豆",
+                "image": "images/image_f76ce8a1.png"
+        },
+        {
+                "name": "大蒜",
+                "image": "images/image_4c2ce27c.png"
+        },
+        {
+                "name": "叶子保护伞",
+                "image": "images/image_aa5b5765.png"
+        },
+        {
+                "name": "金盏花",
+                "image": "images/image_6d30f313.png"
+        },
+        {
+                "name": "西瓜投手",
+                "image": "images/image_92ba5023.png"
+        },
+        {
+                "name": "机枪豌豆",
+                "image": "images/image_4d835fc4.png"
+        },
+        {
+                "name": "双子向日葵",
+                "image": "images/image_a4875c00.png"
+        },
+        {
+                "name": "忧郁蘑菇",
+                "image": "images/image_4b68f3b6.png"
+        },
+        {
+                "name": "香蒲",
+                "image": "images/image_c675ea45.png"
+        },
+        {
+                "name": "「冬」瓜",
+                "image": "images/image_424c269e.png"
+        },
+        {
+                "name": "金磁铁",
+                "image": "images/image_870e7c88.png"
+        },
+        {
+                "name": "荆棘石",
+                "image": "images/image_ce86d248.png"
+        },
+        {
+                "name": "玉米大炮",
+                "image": "images/image_2ab89132.png"
+        },
+        {
+                "name": "模仿者",
+                "image": "images/image_f3fba789.png"
+        },
+        {
+                "name": "爆炸坚果",
+                "image": "images/image_8627ae97.png"
+        },
+        {
+                "name": "巨型坚果墙",
+                "image": "images/image_25a4d3b5.png"
+        },
+        {
+                "name": "苗",
+                "image": null
+        },
+        {
+                "name": "金盏花苗",
+                "image": "images/image_fa66df91.png"
+        }
+];
+
+        function renderPlants(plantsToShow = plantList) {
+            const grid = document.getElementById('plantGrid');
+            const noResults = document.getElementById('noResults');
+            
+            grid.innerHTML = '';
+            
+            if (plantsToShow.length === 0) {
+                grid.style.display = 'none';
+                noResults.style.display = 'block';
+                return;
+            }
+            
+            grid.style.display = 'grid';
+            noResults.style.display = 'none';
+            
+            plantsToShow.forEach(plant => {
+                const card = document.createElement('a');
+                card.className = 'plant-card';
+                card.href = './' + plant.name + '.html';
+                
+                let imageHtml = '';
+                if (plant.image) {
+                    imageHtml = 
+                        '<div class="plant-image-container">' +
+                            '<img src="./' + plant.image + '" alt="' + plant.name + '" class="plant-icon">' +
+                        '</div>';
+                } else {
+                    imageHtml = 
+                        '<div class="plant-image-container">' +
+                            '<div class="plant-placeholder">🌱</div>' +
+                        '</div>';
+                }
+                
+                card.innerHTML = 
+                    imageHtml +
+                    '<div class="plant-info">' +
+                        '<div class="plant-name">' + plant.name + '</div>' +
+                        '<div class="plant-description">点击查看详细资料</div>' +
+                    '</div>';
+                grid.appendChild(card);
+            });
+            
+            document.getElementById('plantCount').textContent = plantsToShow.length;
+        }
+
+        function setupSearch() {
+            const searchInput = document.getElementById('searchInput');
+            searchInput.addEventListener('input', (e) => {
+                const query = e.target.value.toLowerCase();
+                const filtered = plantList.filter(plant => 
+                    plant.name.toLowerCase().includes(query)
+                );
+                renderPlants(filtered);
+            });
+        }
+
+        // Initialize
+        renderPlants();
+        setupSearch();
+    </script>
+</body>
+</html> 

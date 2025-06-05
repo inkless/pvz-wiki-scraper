@@ -24,14 +24,14 @@ from config import settings
 def load_content_types():
     """Load content types from YAML file"""
     try:
-        with open("plants.yaml", "r", encoding="utf-8") as f:
+        with open("wiki_urls.yaml", "r", encoding="utf-8") as f:
             data = yaml.safe_load(f)
             return data.get("content_types", {})
     except FileNotFoundError:
-        print("Warning: plants.yaml not found, using fallback data")
+        print("Warning: wiki_urls.yaml not found, using fallback data")
         return {"plants": []}
     except yaml.YAMLError as e:
-        print(f"Error parsing plants.yaml: {e}")
+        print(f"Error parsing wiki_urls.yaml: {e}")
         return {"plants": []}
 
 
@@ -45,8 +45,8 @@ class PvZWikiScraper:
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
         # Initialize metadata file path
-        self.metadata_file = self.output_dir / "plant_metadata.json"
-        self.plant_metadata = self._load_plant_metadata()
+        self.metadata_file = self.output_dir / "content_metadata.json"
+        self.content_metadata = self._load_content_metadata()
 
         self.content_processor = ContentProcessor()
         self.image_downloader = ImageDownloader(
@@ -54,38 +54,46 @@ class PvZWikiScraper:
         )
         self.template = self._load_template()
 
-    def _load_plant_metadata(self):
-        """Load existing plant metadata or create empty dict"""
+    def _load_content_metadata(self):
+        """Load existing content metadata or create empty dict"""
         if self.metadata_file.exists():
             try:
                 with open(self.metadata_file, "r", encoding="utf-8") as f:
                     return json.load(f)
             except (json.JSONDecodeError, IOError):
-                print("Warning: Could not load plant metadata, starting fresh")
+                print("Warning: Could not load content metadata, starting fresh")
         return {}
 
-    def _save_plant_metadata(self):
-        """Save plant metadata to file"""
+    def _save_content_metadata(self):
+        """Save content metadata to file"""
         try:
             with open(self.metadata_file, "w", encoding="utf-8") as f:
-                json.dump(self.plant_metadata, f, ensure_ascii=False, indent=2)
+                json.dump(self.content_metadata, f, ensure_ascii=False, indent=2)
         except IOError as e:
-            print(f"Warning: Could not save plant metadata: {e}")
+            print(f"Warning: Could not save content metadata: {e}")
 
-    def _extract_plant_metadata(self, title, main_content_html, sidebar_content_html):
-        """Extract plant metadata from processed content"""
+    def _extract_content_metadata(
+        self, title, main_content_html, sidebar_content_html, content_type="plants"
+    ):
+        """Extract content metadata from processed content"""
         metadata = {
             "name": title,
             "image": None,
+            "content_type": content_type,
             "last_updated": time.strftime("%Y-%m-%d %H:%M:%S UTC"),
         }
 
-        # Extract main plant image from sidebar
+        # Extract main image from sidebar (works for both plants and zombies)
         if sidebar_content_html:
             soup = BeautifulSoup(sidebar_content_html, "html.parser")
-            plant_image = soup.find("img", class_="plant-image")
-            if plant_image and plant_image.get("src"):
-                image_src = plant_image["src"]
+            # Try multiple image class selectors
+            image = (
+                soup.find("img", class_="plant-image")
+                or soup.find("img", class_="zombie-image")
+                or soup.find("img", class_="content-image")
+            )
+            if image and image.get("src"):
+                image_src = image["src"]
                 # Remove './' prefix if present
                 if image_src.startswith("./"):
                     image_src = image_src[2:]
@@ -245,12 +253,18 @@ class PvZWikiScraper:
                 f.write(final_html)
             print(f"✅ Saved: {output_path}")
 
-            # Extract and save plant metadata
-            metadata = self._extract_plant_metadata(
-                title, main_content_html, sidebar_content_html
+            # Determine content type from URL or parameter
+            if content_type is None:
+                content_type = (
+                    "plants" if "/植物/" in url or "豌豆射手" in url else "zombies"
+                )
+
+            # Extract and save content metadata
+            metadata = self._extract_content_metadata(
+                title, main_content_html, sidebar_content_html, content_type
             )
-            self.plant_metadata[title] = metadata
-            self._save_plant_metadata()
+            self.content_metadata[title] = metadata
+            self._save_content_metadata()
 
             return True
         except Exception as e:
@@ -331,6 +345,7 @@ Examples:
   # Bulk downloads
   python scraper.py --all                    # Download all plants
   python scraper.py --plants                 # Download plants explicitly
+  python scraper.py --zombies                # Download zombies explicitly
   python scraper.py --all --resume           # Skip existing files
   python scraper.py --plants --delay 2       # Custom delay between requests
         """,
@@ -350,6 +365,9 @@ Examples:
     )
     parser.add_argument(
         "--plants", action="store_true", help="Download all plant pages"
+    )
+    parser.add_argument(
+        "--zombies", action="store_true", help="Download all zombie pages"
     )
 
     # Bulk download options
@@ -398,18 +416,46 @@ def main():
     scraper = PvZWikiScraper()
 
     # Determine mode and execute
-    if args.all or args.plants:
-        # Bulk download mode
-        content_type = "plants"  # For now, --all defaults to plants
-        print("🔄 Bulk download mode: " + content_type)
-        success = scraper.scrape_bulk(
-            content_type=content_type, resume=args.resume, delay=args.delay
-        )
+    if args.all:
+        # Download both plants and zombies
+        print("🔄 Bulk download mode: all content types")
+        success = True
+
+        for content_type in ["plants", "zombies"]:
+            print(f"\n📥 Downloading {content_type}...")
+            result = scraper.scrape_bulk(
+                content_type=content_type, resume=args.resume, delay=args.delay
+            )
+            success = success and result
 
         if success:
             print("✅ Bulk scraping completed successfully!")
         else:
             print("⚠️  Bulk scraping completed with some failures!")
+
+    elif args.plants:
+        # Download plants only
+        print("🔄 Bulk download mode: plants")
+        success = scraper.scrape_bulk(
+            content_type="plants", resume=args.resume, delay=args.delay
+        )
+
+        if success:
+            print("✅ Plants scraping completed successfully!")
+        else:
+            print("⚠️  Plants scraping completed with some failures!")
+
+    elif args.zombies:
+        # Download zombies only
+        print("🔄 Bulk download mode: zombies")
+        success = scraper.scrape_bulk(
+            content_type="zombies", resume=args.resume, delay=args.delay
+        )
+
+        if success:
+            print("✅ Zombies scraping completed successfully!")
+        else:
+            print("⚠️  Zombies scraping completed with some failures!")
 
     elif args.url:
         # Single page mode

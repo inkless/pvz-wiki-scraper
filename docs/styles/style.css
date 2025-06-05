@@ -125,9 +125,12 @@ a:hover {
     text-decoration: underline;
 }
 
-/* Plant-specific images that should have styling */
+/* Content images (plants, zombies, etc.) that should have styling */
 .plant-image,
-.plant-icon {
+.plant-icon,
+.zombie-image,
+.zombie-icon,
+.content-image {
     max-width: 100%;
     height: auto;
     border-radius: 8px;
@@ -162,8 +165,10 @@ td {
     color: #e8f4ea;
 }
 
-/* Enhanced Plant Infobox */
-.plant-infobox {
+/* Enhanced Content Infobox (Plants, Zombies, etc.) */
+.plant-infobox,
+.zombie-infobox,
+.content-infobox {
     background: linear-gradient(145deg, #2d5a3d 0%, #1e3d2b 100%);
     border: 3px solid #4a9c59;
     border-radius: 12px;

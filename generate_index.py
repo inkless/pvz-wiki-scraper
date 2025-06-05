@@ -10,9 +10,9 @@ from datetime import datetime
 from string import Template
 
 
-def get_plant_list_with_images(output_dir="docs"):
-    """Get list of all plant data from metadata file or fallback to HTML parsing"""
-    metadata_file = os.path.join(output_dir, "plant_metadata.json")
+def get_content_list_with_images(output_dir="docs", content_type="plants"):
+    """Get list of all content data from metadata file or fallback to HTML parsing"""
+    metadata_file = os.path.join(output_dir, "content_metadata.json")
 
     # Try to load from metadata file first
     if os.path.exists(metadata_file):
@@ -20,29 +20,32 @@ def get_plant_list_with_images(output_dir="docs"):
             with open(metadata_file, "r", encoding="utf-8") as f:
                 metadata = json.load(f)
 
-            # Convert metadata dict to list format
-            plants = []
-            for plant_name, plant_data in metadata.items():
-                plants.append({"name": plant_name, "image": plant_data.get("image")})
+            # Convert metadata dict to list format and filter by content type
+            content_items = []
+            for item_name, item_data in metadata.items():
+                if item_data.get("content_type", "plants") == content_type:
+                    content_items.append(
+                        {"name": item_name, "image": item_data.get("image")}
+                    )
 
-            print(f"Loaded {len(plants)} plants from metadata file")
-            return plants
+            print(f"Loaded {len(content_items)} {content_type} from metadata file")
+            return content_items
 
         except (json.JSONDecodeError, IOError) as e:
             print(f"Warning: Could not load metadata file: {e}")
             print("Falling back to HTML parsing...")
 
     # Fallback to HTML parsing if metadata file doesn't exist or is invalid
-    return get_plant_list_from_html(output_dir)
+    return get_content_list_from_html(output_dir, content_type)
 
 
-def get_plant_list_from_html(output_dir="docs"):
+def get_content_list_from_html(output_dir="docs", content_type="plants"):
     """Fallback method: Get list of all plant HTML files with their main images"""
     try:
         from bs4 import BeautifulSoup  # noqa: F401
     except ImportError:
         print("Warning: BeautifulSoup not available, returning plants without images")
-        return get_plant_list_names_only(output_dir)
+        return get_content_list_names_only(output_dir, content_type)
 
     html_files = glob.glob(os.path.join(output_dir, "*.html"))
 
@@ -65,7 +68,7 @@ def get_plant_list_from_html(output_dir="docs"):
     return plants
 
 
-def get_plant_list_names_only(output_dir="docs"):
+def get_content_list_names_only(output_dir="docs", content_type="plants"):
     """Minimal fallback: Get plant names only without images"""
     html_files = glob.glob(os.path.join(output_dir, "*.html"))
 
@@ -123,8 +126,13 @@ def extract_plant_image(html_file_path):
 
 def get_plant_list(output_dir="docs"):
     """Legacy function for backwards compatibility"""
-    plants_with_images = get_plant_list_with_images(output_dir)
+    plants_with_images = get_content_list_with_images(output_dir, "plants")
     return [plant["name"] for plant in plants_with_images]
+
+
+def get_plant_list_with_images(output_dir="docs"):
+    """Legacy function for backwards compatibility"""
+    return get_content_list_with_images(output_dir, "plants")
 
 
 def load_template(template_path="templates/index_template.html"):
@@ -150,7 +158,7 @@ def generate_index_html(plants_data, output_path="docs/index.html"):
     last_updated = datetime.now().strftime("%Y-%m-%d %H:%M:%S UTC")
 
     # Convert plants data to format expected by JavaScript
-    if isinstance(plants_data[0], dict):
+    if plants_data and isinstance(plants_data[0], dict):
         # New format with images
         plant_count = len(plants_data)
         plant_list_json = json.dumps(plants_data, ensure_ascii=False, indent=8)
@@ -179,5 +187,5 @@ def generate_index_html(plants_data, output_path="docs/index.html"):
 
 
 if __name__ == "__main__":
-    plants = get_plant_list_with_images()
+    plants = get_content_list_with_images("docs", "plants")
     generate_index_html(plants)

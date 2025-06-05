@@ -43,6 +43,8 @@ UNWANTED_SELECTORS = [
     # Other filters
     ".pi-title-image",
     ".navbox-div .navbar ul",
+    ".wds-tabs__wrapper.with-bottom-border",
+    ".navbox-div.navbox-theme-zombie+p",
 ]
 
 # Sidebar content selectors
