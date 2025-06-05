@@ -405,17 +405,37 @@ class ContentProcessor:
         fields = data.get("fields", {})
         tabs = data.get("tabs", {})
 
-        # Look for user-friendly game data tab (like "图鉴描述")
-        # vs technical data tab (like "游戏数据")
         target_tab = None
 
-        # Prefer tabs with user-friendly labels like "图鉴描述"
-        for tab_label, tab_data in tabs.items():
-            if "图鉴" in tab_label or "描述" in tab_label:
-                target_tab = tab_data
-                break
+        # Strategy: Use the 2nd tab (index 1) if there are multiple tabs
+        if tabs and len(tabs) >= 2:
+            tab_items = list(tabs.items())
+            target_tab = tab_items[1][1]  # Get the second tab's data
 
-        # If no user-friendly tab, look for any non-names tab
+        # Fallback: Look for tabs with numerical game data indicators
+        if not target_tab:
+            game_data_keywords = [
+                "伤害",
+                "生命",
+                "血量",
+                "HP",
+                "攻击",
+                "速度",
+                "范围",
+                "花费",
+                "阳光",
+            ]
+            for tab_label, tab_data in tabs.items():
+                # Look for tabs containing numerical game data fields
+                if tab_data and any(
+                    field
+                    for field in tab_data.keys()
+                    if any(keyword in field for keyword in game_data_keywords)
+                ):
+                    target_tab = tab_data
+                    break
+
+        # Another fallback: Find any non-names tab
         if not target_tab:
             # Find the names tab first so we can exclude it
             names_tab_label, names_tab_data = self._find_names_tab(tabs)

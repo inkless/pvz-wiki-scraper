@@ -8,7 +8,7 @@
 - 🎨 美观的响应式界面
 - 🔍 实时搜索功能
 - 📱 移动端优化
-- 🚀 GitHub Pages 自动部署
+- 🚀 GitHub Pages 部署支持
 - 📊 动态植物统计
 
 ## 🚀 部署到 GitHub Pages
@@ -18,54 +18,48 @@
 1. Fork 或 clone 此仓库到你的 GitHub 账户
 2. 确保仓库是公开的（GitHub Pages 免费版需要公开仓库）
 
-### 2. 启用 GitHub Pages
+### 2. 生成网站内容
 
-1. 进入仓库的 **Settings** 页面
-2. 在左侧菜单中点击 **Pages**
-3. 在 **Source** 部分选择 **GitHub Actions**
-
-### 3. 自动部署配置
-
-项目已配置了 GitHub Actions 工作流程 (`.github/workflows/deploy.yml`)，会在以下情况自动运行：
-
-- 📝 推送到 `main` 分支时
-- 🕕 每天早上 6 点 UTC（北京时间下午 2 点）
-- 🔄 手动触发（在 Actions 页面点击"Run workflow"）
-
-### 4. 访问网站
-
-部署完成后，你的网站将在以下地址可用：
-
+```bash
+# 运行完整的抓取和生成流程
+uv run python main.py
 ```
-https://[你的用户名].github.io/[仓库名]
-```
+
+这将：
+
+- 抓取所有植物信息到 `docs/` 目录
+- 自动生成索引页面
+- 准备好所有 GitHub Pages 需要的文件
 
 ## 🛠️ 本地开发
 
 ### 环境要求
 
 - Python 3.11+
-- uv（Python 包管理器）
+- uv（现代 Python 包管理器）
 
 ### 安装依赖
 
 ```bash
-# 使用 uv 安装依赖
+# 使用 uv 安装依赖（自动创建虚拟环境）
 uv sync
 ```
 
-### 运行爬虫
+### 运行完整流程
 
 ```bash
-# 运行主要的爬虫脚本
+# 运行主脚本（包含抓取和索引生成）
 uv run python main.py
 ```
 
-### 生成索引页面
+### 单独运行组件
 
 ```bash
-# 生成动态索引页面
-python generate_index.py
+# 仅运行爬虫
+uv run python scraper.py --all
+
+# 仅生成索引页面
+uv run python generate_index.py
 ```
 
 ### 本地预览
@@ -82,41 +76,48 @@ python -m http.server 8000
 
 ```
 pvz-wiki-scraper/
-├── .github/workflows/
-│   └── deploy.yml          # GitHub Actions 部署配置
-├── docs/                   # GitHub Pages 输出目录
+├── docs/                   # GitHub Pages 部署目录
 │   ├── index.html         # 动态生成的主页
 │   ├── *.html             # 植物详情页面
 │   ├── styles/            # CSS 样式文件
 │   └── images/            # 植物图片
-├── output/                # 爬虫输出目录
-├── utils/                 # 工具模块
 ├── templates/             # HTML 模板
-├── styles/                # 原始样式文件
+│   └── index_template.html # 索引页面模板
+├── utils/                 # 工具模块
+├── config/                # 配置文件
 ├── scraper.py             # 主爬虫脚本
 ├── generate_index.py      # 索引页面生成器
-└── main.py               # 入口脚本
+├── main.py               # 入口脚本
+├── pyproject.toml        # uv 项目配置
+└── uv.lock              # uv 依赖锁定文件
 ```
 
-## 🔧 自定义配置
+## 🔧 配置选项
 
-### 修改爬取频率
+### 修改抓取设置
 
-编辑 `.github/workflows/deploy.yml` 中的 cron 表达式：
+编辑 `config/settings.py` 来调整：
 
-```yaml
-schedule:
-  - cron: "0 6 * * *" # 每天 6:00 UTC
-```
+- 输出目录
+- 请求延迟
+- 图片处理选项
 
-### 自定义域名
+### 自定义样式
 
-1. 在仓库设置的 Pages 部分添加自定义域名
-2. 在 `docs/` 目录下创建 `CNAME` 文件，内容为你的域名
+编辑 `docs/styles/style.css` 来自定义网站外观。
 
-### 修改样式
+### 自定义模板
 
-编辑 `styles/style.css` 来自定义网站外观。
+修改 `templates/index_template.html` 来调整主页布局。
+
+## 🔄 更新网站
+
+要更新网站内容：
+
+1. 运行 `uv run python main.py` 生成最新内容
+2. 提交更改到 Git
+3. 推送到 GitHub
+4. GitHub Pages 会自动更新
 
 ## 🤝 贡献
 

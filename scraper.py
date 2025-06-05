@@ -11,6 +11,7 @@ import sys
 import argparse
 import time
 import urllib.parse
+import json
 
 
 # Import our modules
@@ -87,16 +88,56 @@ class PvZWikiScraper:
         self.session = requests.Session()
         self.session.headers.update({"User-Agent": settings.USER_AGENT})
         self.output_dir = Path(settings.OUTPUT_DIR)
-        self.output_dir.mkdir(exist_ok=True)
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+
+        # Initialize metadata file path
+        self.metadata_file = self.output_dir / "plant_metadata.json"
+        self.plant_metadata = self._load_plant_metadata()
+
         self.content_processor = ContentProcessor()
         self.image_downloader = ImageDownloader(
             self.session, self.output_dir, "https://pvz.fandom.com"
         )
-
-        # Styles are already in docs/styles/ - no need to copy
-
-        # Load template
         self.template = self._load_template()
+
+    def _load_plant_metadata(self):
+        """Load existing plant metadata or create empty dict"""
+        if self.metadata_file.exists():
+            try:
+                with open(self.metadata_file, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except (json.JSONDecodeError, IOError):
+                print("Warning: Could not load plant metadata, starting fresh")
+        return {}
+
+    def _save_plant_metadata(self):
+        """Save plant metadata to file"""
+        try:
+            with open(self.metadata_file, "w", encoding="utf-8") as f:
+                json.dump(self.plant_metadata, f, ensure_ascii=False, indent=2)
+        except IOError as e:
+            print(f"Warning: Could not save plant metadata: {e}")
+
+    def _extract_plant_metadata(self, title, main_content_html, sidebar_content_html):
+        """Extract plant metadata from processed content"""
+        metadata = {
+            "name": title,
+            "image": None,
+            "last_updated": time.strftime("%Y-%m-%d %H:%M:%S UTC"),
+        }
+
+        # Extract main plant image from sidebar
+        if sidebar_content_html:
+            soup = BeautifulSoup(sidebar_content_html, "html.parser")
+            plant_image = soup.find("img", class_="plant-image")
+            if plant_image and plant_image.get("src"):
+                image_src = plant_image["src"]
+                # Remove './' prefix if present
+                if image_src.startswith("./"):
+                    image_src = image_src[2:]
+                metadata["image"] = image_src
+
+        return metadata
 
     def _load_template(self):
         """Load HTML template from file"""
@@ -249,6 +290,14 @@ class PvZWikiScraper:
             with open(output_path, "w", encoding="utf-8") as f:
                 f.write(final_html)
             print(f"✅ Saved: {output_path}")
+
+            # Extract and save plant metadata
+            metadata = self._extract_plant_metadata(
+                title, main_content_html, sidebar_content_html
+            )
+            self.plant_metadata[title] = metadata
+            self._save_plant_metadata()
+
             return True
         except Exception as e:
             print(f"Error saving file: {e}")
