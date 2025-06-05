@@ -1,0 +1,570 @@
+/* PvZ Wiki - Enhanced Styling to match Fandom wiki appearance */
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Rubik", -apple-system, BlinkMacSystemFont, "Segoe UI", 
+                 "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", 
+                 sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+    color: #fff;
+    background: linear-gradient(135deg, #1a3a3a 0%, #2c5555 50%, #1a3a3a 100%);
+    background-attachment: fixed;
+    min-height: 100vh;
+}
+
+/* Main container */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Page title */
+h1 {
+    color: #fff;
+    margin: 0 0 1.5em 0;
+    padding: 20px 0;
+    font-size: 2.5em;
+    font-weight: 700;
+    text-align: center;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    border-bottom: 3px solid #4a9c59;
+    background: rgba(0,0,0,0.2);
+    border-radius: 8px 8px 0 0;
+}
+
+/* Content grid */
+.content {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 25px;
+    margin-top: 0;
+}
+
+/* Main content area */
+.main-content {
+    background: rgba(15, 35, 45, 0.95);
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    border: 1px solid rgba(74, 156, 89, 0.3);
+    backdrop-filter: blur(10px);
+}
+
+/* Sidebar */
+.sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Typography improvements */
+h2, h3, h4, h5, h6 {
+    color: #4a9c59;
+    margin-top: 2em;
+    margin-bottom: 0.8em;
+    font-weight: 600;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+h2 {
+    font-size: 1.8em;
+    border-bottom: 2px solid #4a9c59;
+    padding-bottom: 0.5em;
+}
+
+h3 {
+    font-size: 1.4em;
+}
+
+p {
+    margin-bottom: 1.2em;
+    color: #e8f4ea;
+    text-align: justify;
+}
+
+/* Links */
+a {
+    color: #66d9ff;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+a:hover {
+    color: #4a9c59;
+    text-decoration: underline;
+}
+
+/* Images */
+img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+/* Tables */
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1.5em 0;
+    background: rgba(20, 40, 50, 0.8);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+th, td {
+    border: 1px solid rgba(74, 156, 89, 0.3);
+    padding: 12px;
+    text-align: left;
+}
+
+th {
+    background: linear-gradient(135deg, #4a9c59, #2d5a3d);
+    color: white;
+    font-weight: 600;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+td {
+    color: #e8f4ea;
+}
+
+/* Enhanced Plant Infobox */
+.plant-infobox {
+    background: linear-gradient(145deg, #2d5a3d 0%, #1e3d2b 100%);
+    border: 3px solid #4a9c59;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    color: white;
+    margin-bottom: 20px;
+    font-family: "Rubik", sans-serif;
+}
+
+.infobox-header {
+    background: linear-gradient(135deg, #4a9c59, #2d5a3d);
+    padding: 15px;
+    text-align: center;
+    border-bottom: 2px solid #66d9ff;
+}
+
+.header-title {
+    font-size: 1.1em;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 8px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+.plant-name {
+    font-size: 1.4em;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+.plant-image-container {
+    padding: 20px;
+    text-align: center;
+    background: rgba(0,0,0,0.2);
+}
+
+.plant-image {
+    width: 120px;
+    height: 120px;
+    object-fit: contain;
+    border-radius: 12px;
+    background: rgba(74, 156, 89, 0.3);
+    padding: 10px;
+    margin-bottom: 15px;
+}
+
+.plant-description {
+    color: #e8f4ea;
+    font-size: 0.95em;
+    font-style: italic;
+}
+
+/* Vertical Sections System */
+.infobox-sections {
+    border-top: 1px solid rgba(102, 217, 255, 0.3);
+}
+
+.info-section {
+    border-bottom: 1px solid rgba(102, 217, 255, 0.2);
+}
+
+.info-section:last-child {
+    border-bottom: none;
+}
+
+.section-header {
+    background: linear-gradient(135deg, #4a9c59, #2d5a3d);
+    color: #fff;
+    padding: 12px 15px;
+    font-weight: 600;
+    font-size: 0.95em;
+    border-bottom: 1px solid rgba(102, 217, 255, 0.3);
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+.section-content {
+    padding: 15px;
+}
+
+/* Game Data Tab */
+.game-data-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    margin: 4px 0;
+    background: rgba(74, 156, 89, 0.2);
+    border-radius: 6px;
+}
+
+.data-label {
+    font-weight: 600;
+    color: #66d9ff;
+    font-size: 0.9em;
+}
+
+.data-value {
+    color: #fff;
+    font-weight: 500;
+}
+
+/* Names Tab */
+.name-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 12px;
+    margin: 4px 0;
+    background: rgba(74, 156, 89, 0.2);
+    border-radius: 4px;
+}
+
+.name-label {
+    color: #66d9ff;
+    font-weight: 600;
+    font-size: 0.9em;
+}
+
+.name-value {
+    color: #fff;
+}
+
+/* Description Tab */
+.desc-field {
+    padding: 8px 12px;
+    margin: 4px 0;
+    background: rgba(0,0,0,0.2);
+    border-radius: 4px;
+    color: #e8f4ea;
+    line-height: 1.5;
+}
+
+
+
+/* Legacy infobox support (fallback) */
+.pi-item, .pi-panel, .portable-infobox {
+    background: linear-gradient(145deg, #4a9c59 0%, #2d5a3d 50%, #1e3d2b 100%);
+    border: 2px solid #66d9ff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    color: white;
+    margin-bottom: 20px;
+    position: relative;
+}
+
+/* Navigation boxes */
+.navbox, .navbox-div {
+    background: linear-gradient(135deg, #2d5a3d, #1e3d2b);
+    border: 2px solid #4a9c59;
+    border-radius: 12px;
+    margin: 2em 0;
+    overflow: hidden;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+}
+
+.navbox-title, .navbox-header {
+    background: linear-gradient(135deg, #4a9c59, #2d5a3d);
+    color: white;
+    padding: 15px;
+    font-weight: 700;
+    text-align: center;
+    font-size: 1.1em;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+.navbox-list {
+    background: rgba(20, 40, 50, 0.8);
+    color: #e8f4ea;
+    padding: 15px;
+}
+
+.navbox-list ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.navbox-list li {
+    display: inline-block;
+    margin: 2px 8px 2px 0;
+    padding: 4px 8px;
+    background: rgba(74, 156, 89, 0.2);
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+}
+
+.navbox-list li:hover {
+    background: rgba(74, 156, 89, 0.4);
+}
+
+.navbox-list li::after {
+    content: "";
+}
+
+/* Table of Contents */
+.toc {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    padding: 15px;
+    margin: 2em 0;
+}
+
+.toc h2 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 1.1em;
+    color: #fff;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    padding-bottom: 8px;
+}
+
+.toc ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+.toc li {
+    margin: 4px 0;
+    padding: 2px 0;
+}
+
+.toc li ul {
+    padding-left: 20px;
+    margin-top: 4px;
+}
+
+.toc a {
+    color: #e8f4ea;
+    text-decoration: none;
+    font-size: 0.9em;
+    transition: color 0.2s ease;
+}
+
+.toc a:hover {
+    color: #66d9ff;
+}
+
+/* Almanac styling */
+.almanac-plant {
+    background: linear-gradient(145deg, #4a9c59, #2d5a3d);
+    border: 2px solid #66d9ff;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 2em 0;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+
+.almanac-plant-title {
+    font-size: 1.4em;
+    font-weight: 700;
+    color: #fff;
+    text-align: center;
+    margin-bottom: 15px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+.almanac-description-header {
+    color: #e8f4ea;
+    font-style: italic;
+    border-bottom: 1px solid rgba(102, 217, 255, 0.3);
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.almanac-description-stat {
+    color: #66d9ff;
+    font-weight: 600;
+}
+
+.almanac-description-flavor {
+    color: #b8e6c1;
+    font-style: italic;
+    margin: 15px 0;
+    padding: 10px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 6px;
+    border-left: 3px solid #66d9ff;
+}
+
+/* Figures and captions */
+figure {
+    margin: 20px 0;
+    text-align: center;
+}
+
+figcaption {
+    color: #b8e6c1;
+    font-style: italic;
+    margin-top: 8px;
+    font-size: 0.9em;
+}
+
+/* Gallery improvements */
+.wikia-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.wikia-gallery-item {
+    background: rgba(20, 40, 50, 0.8);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    transition: transform 0.3s ease;
+}
+
+.wikia-gallery-item:hover {
+    transform: translateY(-5px);
+}
+
+/* Responsive design */
+@media (max-width: 1024px) {
+    .content {
+        grid-template-columns: 1fr 350px;
+        gap: 20px;
+    }
+}
+
+@media (max-width: 768px) {
+    .content {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .sidebar {
+        order: -1;
+    }
+    
+    h1 {
+        font-size: 2em;
+    }
+    
+    .main-content {
+        padding: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 10px;
+    }
+    
+    h1 {
+        font-size: 1.8em;
+        padding: 15px 0;
+    }
+    
+    .main-content {
+        padding: 15px;
+    }
+}
+
+/* ================== MEDIAWIKI FIGURE FIXES ================== */
+/* Override MediaWiki figure floats to prevent height issues */
+figure.thumb {
+    float: none !important;
+    margin: 1.5em auto;
+    clear: both;
+    display: block;
+    max-width: 300px;
+    background: rgba(20, 40, 50, 0.6);
+    border: 1px solid rgba(102, 217, 255, 0.3);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+figure.thumb.mw-halign-left,
+figure.thumb.mw-halign-right {
+    float: none !important;
+    margin: 1.5em auto;
+}
+
+figure.thumb img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px 8px 0 0;
+}
+
+figure.thumb figcaption,
+figure.thumb .thumbcaption {
+    padding: 10px;
+    font-size: 0.85em;
+    color: #b8e6c1;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 0 0 8px 8px;
+    line-height: 1.4;
+    text-align: center;
+}
+
+figure.thumb .caption {
+    color: #66d9ff;
+    font-weight: 500;
+}
+
+/* Ensure proper spacing after figures */
+figure.thumb + * {
+    margin-top: 1.5em;
+}
+
+/* Clear all floats to prevent layout issues */
+.mw-parser-output::after {
+    content: "";
+    display: table;
+    clear: both;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+    width: 12px;
+}
+
+::-webkit-scrollbar-track {
+    background: #1a3a3a;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #4a9c59;
+    border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #66d9ff;
+} 
