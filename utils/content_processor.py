@@ -91,8 +91,13 @@ class ContentProcessor:
                 # URL decode the page name
                 page_name = urllib.parse.unquote(page_name)
 
-                # Convert to local HTML file
-                local_href = f"./{page_name}.html"
+                # Special case: Convert "植物大战僵尸" links to index.html
+                if page_name == "植物大战僵尸":
+                    local_href = "./index.html"
+                else:
+                    # Convert to local HTML file
+                    local_href = f"./{page_name}.html"
+
                 link["href"] = local_href
 
                 # Add a class to indicate it's a local wiki link
@@ -110,8 +115,13 @@ class ContentProcessor:
                     page_name = parsed.path.split("/")[-1]
                     page_name = urllib.parse.unquote(page_name)
 
-                    # Convert to local HTML file
-                    local_href = f"./{page_name}.html"
+                    # Special case: Convert "植物大战僵尸" links to index.html
+                    if page_name == "植物大战僵尸":
+                        local_href = "./index.html"
+                    else:
+                        # Convert to local HTML file
+                        local_href = f"./{page_name}.html"
+
                     link["href"] = local_href
 
                     # Add a class to indicate it's a local wiki link
@@ -267,13 +277,11 @@ class ContentProcessor:
             + title
             + """</div>
             </div>
-            
             <div class="plant-image-container">
                 """
             + image
             + """
             </div>
-            
             <div class="infobox-sections">
                 <div class="info-section">
                     <div class="section-header">游戏数据</div>
@@ -283,7 +291,7 @@ class ContentProcessor:
             + """
                     </div>
                 </div>
-                
+
                 <div class="info-section">
                     <div class="section-header">名称一览</div>
                     <div class="section-content">
@@ -293,7 +301,6 @@ class ContentProcessor:
                     </div>
                 </div>
             </div>
-            
         </div>
         """
         )

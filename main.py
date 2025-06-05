@@ -5,7 +5,7 @@ Main entry point for PvZ Wiki Scraper
 
 import sys
 from scraper import main as scraper_main
-from generate_index import get_plant_list, generate_index_html
+from generate_index import get_plant_list_with_images, generate_index_html
 
 
 def main():
@@ -23,7 +23,7 @@ def main():
 
         # Generate index page
         print("📄 Generating index page...")
-        plants = get_plant_list()
+        plants = get_plant_list_with_images()
         generate_index_html(plants)
         print("✅ Index page generated!")
 

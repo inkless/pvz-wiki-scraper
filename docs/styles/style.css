@@ -24,6 +24,31 @@ body {
     padding: 20px;
 }
 
+/* Back Button */
+.back-button-container {
+    margin-bottom: 20px;
+}
+
+.back-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    color: white;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95em;
+}
+
+.back-icon {
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+.back-text {
+    white-space: nowrap;
+}
+
 /* Page title */
 h1 {
     color: #fff;
@@ -107,11 +132,6 @@ a:hover {
     height: auto;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-}
-
-/* MediaWiki content images (already styled above in the MediaWiki figure section) */
-figure.thumb img {
-    /* Styling handled in MediaWiki figure fixes section */
 }
 
 /* Tables */
@@ -500,6 +520,19 @@ figcaption {
     
     .main-content {
         padding: 15px;
+    }
+    
+    .back-button {
+        padding: 10px 16px;
+        font-size: 0.9em;
+    }
+    
+    .back-text {
+        display: none;
+    }
+    
+    .back-icon {
+        font-size: 1.4em;
     }
 }
 

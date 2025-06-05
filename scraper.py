@@ -12,6 +12,7 @@ import argparse
 import time
 import urllib.parse
 import json
+import yaml
 
 
 # Import our modules
@@ -19,66 +20,19 @@ from utils.content_processor import ContentProcessor
 from utils.image_downloader import ImageDownloader
 from config import settings
 
-# Content type definitions for bulk downloads
-CONTENT_TYPES = {
-    "plants": [
-        "https://pvz.fandom.com/zh/wiki/豌豆射手",
-        "https://pvz.fandom.com/zh/wiki/向日葵",
-        "https://pvz.fandom.com/zh/wiki/樱桃炸弹",
-        "https://pvz.fandom.com/zh/wiki/坚果墙",
-        "https://pvz.fandom.com/zh/wiki/马铃薯地雷",
-        "https://pvz.fandom.com/zh/wiki/雪花豌豆",
-        "https://pvz.fandom.com/zh/wiki/大嘴花",
-        "https://pvz.fandom.com/zh/wiki/连发豌豆",
-        "https://pvz.fandom.com/zh/wiki/喷射蘑菇",
-        "https://pvz.fandom.com/zh/wiki/阳光蘑菇",
-        "https://pvz.fandom.com/zh/wiki/烟雾蘑菇",
-        "https://pvz.fandom.com/zh/wiki/墓碑破坏者",
-        "https://pvz.fandom.com/zh/wiki/催眠蘑菇",
-        "https://pvz.fandom.com/zh/wiki/胆小蘑菇",
-        "https://pvz.fandom.com/zh/wiki/冰蘑菇",
-        "https://pvz.fandom.com/zh/wiki/毁灭蘑菇",
-        "https://pvz.fandom.com/zh/wiki/睡莲叶",
-        "https://pvz.fandom.com/zh/wiki/倭瓜",
-        "https://pvz.fandom.com/zh/wiki/三线豌豆",
-        "https://pvz.fandom.com/zh/wiki/缠绕海带",
-        "https://pvz.fandom.com/zh/wiki/火爆辣椒",
-        "https://pvz.fandom.com/zh/wiki/荆棘草",
-        "https://pvz.fandom.com/zh/wiki/火炬木",
-        "https://pvz.fandom.com/zh/wiki/高坚果",
-        "https://pvz.fandom.com/zh/wiki/海蘑菇",
-        "https://pvz.fandom.com/zh/wiki/植物灯",
-        "https://pvz.fandom.com/zh/wiki/仙人掌",
-        "https://pvz.fandom.com/zh/wiki/三叶草",
-        "https://pvz.fandom.com/zh/wiki/分裂豌豆",
-        "https://pvz.fandom.com/zh/wiki/杨桃",
-        "https://pvz.fandom.com/zh/wiki/南瓜",
-        "https://pvz.fandom.com/zh/wiki/磁铁蘑菇",
-        "https://pvz.fandom.com/zh/wiki/卷心菜投手",
-        "https://pvz.fandom.com/zh/wiki/花盆",
-        "https://pvz.fandom.com/zh/wiki/玉米投手",
-        "https://pvz.fandom.com/zh/wiki/咖啡豆",
-        "https://pvz.fandom.com/zh/wiki/大蒜",
-        "https://pvz.fandom.com/zh/wiki/叶子保护伞",
-        "https://pvz.fandom.com/zh/wiki/金盏花",
-        "https://pvz.fandom.com/zh/wiki/西瓜投手",
-        "https://pvz.fandom.com/zh/wiki/机枪豌豆",
-        "https://pvz.fandom.com/zh/wiki/双子向日葵",
-        "https://pvz.fandom.com/zh/wiki/忧郁蘑菇",
-        "https://pvz.fandom.com/zh/wiki/香蒲",
-        "https://pvz.fandom.com/zh/wiki/「冬」瓜",
-        "https://pvz.fandom.com/zh/wiki/金磁铁",
-        "https://pvz.fandom.com/zh/wiki/荆棘石",
-        "https://pvz.fandom.com/zh/wiki/玉米大炮",
-        "https://pvz.fandom.com/zh/wiki/模仿者",
-        "https://pvz.fandom.com/zh/wiki/爆炸坚果",
-        "https://pvz.fandom.com/zh/wiki/巨型坚果墙",
-        "https://pvz.fandom.com/zh/wiki/苗",
-        "https://pvz.fandom.com/zh/wiki/金盏花苗",
-    ],
-    # Future expansion:
-    # 'zombies': [...],
-}
+
+def load_content_types():
+    """Load content types from YAML file"""
+    try:
+        with open("plants.yaml", "r", encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+            return data.get("content_types", {})
+    except FileNotFoundError:
+        print("Warning: plants.yaml not found, using fallback data")
+        return {"plants": []}
+    except yaml.YAMLError as e:
+        print(f"Error parsing plants.yaml: {e}")
+        return {"plants": []}
 
 
 class PvZWikiScraper:
@@ -305,7 +259,8 @@ class PvZWikiScraper:
 
     def get_content_urls(self, content_type):
         """Get URLs for a specific content type"""
-        return CONTENT_TYPES.get(content_type, [])
+        content_types = load_content_types()
+        return content_types.get(content_type, [])
 
     def scrape_bulk(self, content_type="plants", resume=False, delay=1.5):
         """Bulk download pages for a specific content type"""
@@ -351,7 +306,7 @@ class PvZWikiScraper:
                 time.sleep(delay)
 
         # Summary report
-        print(f"\n📊 Bulk download complete!")
+        print("\n📊 Bulk download complete!")
         print(f"✅ Successful: {success_count}")
         if skipped_count > 0:
             print(f"⏭️  Skipped: {skipped_count}")
@@ -372,8 +327,8 @@ Examples:
   # Single page download
   python scraper.py "https://pvz.fandom.com/zh/wiki/豌豆射手"
   python scraper.py "https://pvz.fandom.com/zh/wiki/豌豆射手" custom_name.html
-  
-  # Bulk downloads  
+
+  # Bulk downloads
   python scraper.py --all                    # Download all plants
   python scraper.py --plants                 # Download plants explicitly
   python scraper.py --all --resume           # Skip existing files

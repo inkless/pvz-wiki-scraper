@@ -4,7 +4,6 @@ Image Downloader Module
 Handles downloading and processing images from wiki pages
 """
 
-import requests
 from pathlib import Path
 from urllib.parse import urljoin, urlparse, unquote
 import hashlib
