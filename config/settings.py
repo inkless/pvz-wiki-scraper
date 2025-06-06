@@ -15,7 +15,7 @@ OUTPUT_DIR = "docs"
 MAX_FILENAME_LENGTH = 100
 
 # Template files
-TEMPLATE_FILE = "templates/template.html"
+TEMPLATE_FILE = "templates/content_template.html"
 CSS_FILE = "styles/style.css"
 
 # Content selectors

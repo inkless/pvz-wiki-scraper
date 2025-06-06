@@ -1,9 +1,14 @@
 // Index page JavaScript functionality
 
+function sanitizePageName(pageName) {
+  // Remove parentheses and other problematic characters that get filtered out in filenames
+  return pageName.replace(/[（）()]/g, "").trim();
+}
+
 function createContentCard(item, isZombie = false) {
   const card = document.createElement("a");
   card.className = "plant-card" + (isZombie ? " zombie" : "");
-  card.href = "./" + item.name + ".html";
+  card.href = "./" + sanitizePageName(item.name) + ".html";
 
   let imageHtml = "";
   if (item.image) {

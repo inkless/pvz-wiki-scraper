@@ -154,10 +154,18 @@ class PvZWikiScraper:
 
         return "PvZ Wiki Page"
 
-    def create_clean_html(self, title, main_content, sidebar_content=""):
+    def create_clean_html(
+        self, title, main_content, sidebar_content="", content_type="plants"
+    ):
         """Create final HTML using template"""
+        # Determine theme class based on content type
+        theme_class = "zombie-theme" if content_type == "zombies" else "plant-theme"
+
         return self.template.format(
-            title=title, main_content=main_content, sidebar_content=sidebar_content
+            title=title,
+            main_content=main_content,
+            sidebar_content=sidebar_content,
+            theme_class=theme_class,
         )
 
     def generate_filename(self, title, custom_filename=None, content_type=None):
@@ -243,9 +251,16 @@ class PvZWikiScraper:
         # Ensure directory exists for organized content
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
+        # Determine content type from URL or parameter
+        determined_content_type = content_type
+        if determined_content_type is None:
+            determined_content_type = (
+                "plants" if "/植物/" in url or "豌豆射手" in url else "zombies"
+            )
+
         # Create final HTML with consistent relative paths
         final_html = self.create_clean_html(
-            title, main_content_html, sidebar_content_html
+            title, main_content_html, sidebar_content_html, determined_content_type
         )
 
         try:
@@ -253,15 +268,9 @@ class PvZWikiScraper:
                 f.write(final_html)
             print(f"✅ Saved: {output_path}")
 
-            # Determine content type from URL or parameter
-            if content_type is None:
-                content_type = (
-                    "plants" if "/植物/" in url or "豌豆射手" in url else "zombies"
-                )
-
             # Extract and save content metadata
             metadata = self._extract_content_metadata(
-                title, main_content_html, sidebar_content_html, content_type
+                title, main_content_html, sidebar_content_html, determined_content_type
             )
             self.content_metadata[title] = metadata
             self._save_content_metadata()

@@ -80,6 +80,15 @@ class ContentProcessor:
         # 6. Clean up TOC entries for removed sections
         self._clean_toc_entries(soup)
 
+    def _sanitize_page_name_for_filename(self, page_name):
+        """Sanitize page name to match the filename generation logic"""
+        # Use the same character filtering as generate_filename_from_url
+        allowed_chars = (" ", "-", "_", "「", "」")
+        safe_name = "".join(
+            c for c in page_name if c.isalnum() or c in allowed_chars
+        ).strip()
+        return safe_name
+
     def _convert_wiki_links(self, soup):
         """Convert internal wiki links to local HTML files"""
         import urllib.parse
@@ -98,8 +107,10 @@ class ContentProcessor:
                 if page_name == "植物大战僵尸":
                     local_href = "./index.html"
                 else:
+                    # Sanitize page name to match filename generation
+                    sanitized_name = self._sanitize_page_name_for_filename(page_name)
                     # Convert to local HTML file
-                    local_href = f"./{page_name}.html"
+                    local_href = f"./{sanitized_name}.html"
 
                 link["href"] = local_href
 
@@ -122,8 +133,12 @@ class ContentProcessor:
                     if page_name == "植物大战僵尸":
                         local_href = "./index.html"
                     else:
+                        # Sanitize page name to match filename generation
+                        sanitized_name = self._sanitize_page_name_for_filename(
+                            page_name
+                        )
                         # Convert to local HTML file
-                        local_href = f"./{page_name}.html"
+                        local_href = f"./{sanitized_name}.html"
 
                     link["href"] = local_href
 
