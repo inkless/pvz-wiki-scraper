@@ -15,7 +15,7 @@ class ContentProcessor:
         """Initialize content processor with Chinese translator"""
         self.translator = ChineseTranslator()
 
-    def clean_content(self, content_soup):
+    def clean_content(self, content_soup, content_type="plants"):
         """Remove unwanted elements and clean up the content"""
         if not content_soup:
             return None, None
@@ -43,7 +43,7 @@ class ContentProcessor:
                 tag.decompose()
 
         # Extract and process infobox data
-        sidebar_content = self._create_enhanced_infobox(cleaned)
+        sidebar_content = self._create_enhanced_infobox(cleaned, content_type)
 
         # Remove processed infobox elements from main content
         for selector in settings.SIDEBAR_SELECTORS:
@@ -80,6 +80,9 @@ class ContentProcessor:
         # 6. Clean up TOC entries for removed sections
         self._clean_toc_entries(soup)
 
+        # 7. Remove MediaWiki performance comments
+        self._remove_mediawiki_comments(soup)
+
     def _sanitize_page_name_for_filename(self, page_name):
         """Sanitize page name to match the filename generation logic"""
         # Use the same character filtering as generate_filename_from_url
@@ -88,6 +91,34 @@ class ContentProcessor:
             c for c in page_name if c.isalnum() or c in allowed_chars
         ).strip()
         return safe_name
+
+    def _process_wiki_link(self, link, page_name):
+        """Process a wiki link by mapping page name to local href and adding wiki-link class"""
+        import urllib.parse
+
+        # URL decode the page name
+        page_name = urllib.parse.unquote(page_name)
+
+        # Special case: Convert "植物大战僵尸" links to index.html
+        if page_name == "植物大战僵尸":
+            local_href = "./index.html"
+        # Special case: Redirect "橄榄球僵尸（在线试玩）" to "暗黑橄榄球僵尸"
+        elif page_name == "橄榄球僵尸（在线试玩）":
+            local_href = "./暗黑橄榄球僵尸.html"
+        else:
+            # Sanitize page name to match filename generation
+            sanitized_name = self._sanitize_page_name_for_filename(page_name)
+            # Convert to local HTML file
+            local_href = f"./{sanitized_name}.html"
+
+        link["href"] = local_href
+
+        # Add a class to indicate it's a local wiki link
+        existing_class = link.get("class", [])
+        if isinstance(existing_class, str):
+            existing_class = [existing_class]
+        existing_class.append("wiki-link")
+        link["class"] = existing_class
 
     def _convert_wiki_links(self, soup):
         """Convert internal wiki links to local HTML files"""
@@ -100,26 +131,7 @@ class ContentProcessor:
             if href.startswith("/zh/wiki/") or href.startswith("/wiki/"):
                 # Extract the page name from the URL
                 page_name = href.split("/")[-1]
-                # URL decode the page name
-                page_name = urllib.parse.unquote(page_name)
-
-                # Special case: Convert "植物大战僵尸" links to index.html
-                if page_name == "植物大战僵尸":
-                    local_href = "./index.html"
-                else:
-                    # Sanitize page name to match filename generation
-                    sanitized_name = self._sanitize_page_name_for_filename(page_name)
-                    # Convert to local HTML file
-                    local_href = f"./{sanitized_name}.html"
-
-                link["href"] = local_href
-
-                # Add a class to indicate it's a local wiki link
-                existing_class = link.get("class", [])
-                if isinstance(existing_class, str):
-                    existing_class = [existing_class]
-                existing_class.append("wiki-link")
-                link["class"] = existing_class
+                self._process_wiki_link(link, page_name)
 
             elif "fandom.com" in href and "/wiki/" in href:
                 # Handle full fandom URLs
@@ -127,27 +139,7 @@ class ContentProcessor:
                 parsed = urllib.parse.urlparse(href)
                 if parsed.path and "/wiki/" in parsed.path:
                     page_name = parsed.path.split("/")[-1]
-                    page_name = urllib.parse.unquote(page_name)
-
-                    # Special case: Convert "植物大战僵尸" links to index.html
-                    if page_name == "植物大战僵尸":
-                        local_href = "./index.html"
-                    else:
-                        # Sanitize page name to match filename generation
-                        sanitized_name = self._sanitize_page_name_for_filename(
-                            page_name
-                        )
-                        # Convert to local HTML file
-                        local_href = f"./{sanitized_name}.html"
-
-                    link["href"] = local_href
-
-                    # Add a class to indicate it's a local wiki link
-                    existing_class = link.get("class", [])
-                    if isinstance(existing_class, str):
-                        existing_class = [existing_class]
-                    existing_class.append("wiki-link")
-                    link["class"] = existing_class
+                    self._process_wiki_link(link, page_name)
 
             # For external links, we can leave them as-is or mark them
             # so they open in new tabs when viewed locally
@@ -218,7 +210,7 @@ class ContentProcessor:
 
                     element = element.next_sibling
 
-    def _create_enhanced_infobox(self, soup):
+    def _create_enhanced_infobox(self, soup, content_type="plants"):
         """Create enhanced infobox with tabs matching the screenshot design"""
 
         # Find portable infobox (the actual structure used by the wiki)
@@ -231,7 +223,7 @@ class ContentProcessor:
         if not infobox:
             return ""
 
-        # Extract data from existing infobox
+            # Extract data from existing infobox
         infobox_data = self._extract_infobox_data(infobox)
 
         # Extract title from portable infobox
@@ -277,11 +269,16 @@ class ContentProcessor:
         gamedata_tab = self._create_gamedata_tab(infobox_data)
         names_tab = self._create_names_tab(infobox_data)
 
+        # Determine header title based on content type
+        header_title = "僵尸图鉴" if content_type == "zombies" else "植物图鉴"
+
         infobox_html = (
             """
         <div class="plant-infobox">
             <div class="infobox-header">
-                <div class="header-title">植物图鉴</div>
+                <div class="header-title">"""
+            + header_title
+            + """</div>
                 <div class="plant-name">"""
             + title
             + """</div>
@@ -587,3 +584,29 @@ class ContentProcessor:
                 sub_tocnumber = sub_li.find("span", class_="tocnumber")
                 if sub_tocnumber:
                     sub_tocnumber.string = f"{i}.{j}"
+
+    def _remove_mediawiki_comments(self, soup):
+        """Remove MediaWiki performance and debug comments like NewPP limit report"""
+        from bs4 import Comment
+
+        # Find all HTML comments
+        comments = soup.find_all(string=lambda text: isinstance(text, Comment))
+
+        for comment in comments:
+            comment_text = str(comment).strip()
+            # Remove MediaWiki performance and debug comments
+            if any(
+                keyword in comment_text
+                for keyword in [
+                    "NewPP limit report",
+                    "Transclusion expansion time report",
+                    "Saved in parser cache",
+                    "CPU time usage:",
+                    "Real time usage:",
+                    "Preprocessor visited node count:",
+                    "Template argument size:",
+                    "Lua time usage:",
+                    "Lua memory usage:",
+                ]
+            ):
+                comment.extract()

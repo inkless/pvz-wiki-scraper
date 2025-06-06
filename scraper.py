@@ -197,8 +197,29 @@ class PvZWikiScraper:
 
         return f"{safe_name}.html"
 
-    def scrape_page(self, url, output_filename=None, content_type=None):
-        """Main scraping function"""
+    def _determine_content_type_from_url(self, url):
+        """Determine content type (plants/zombies) from URL using existing wiki_urls.yaml data"""
+        content_types = load_content_types()
+
+        # Check if URL is in the plants list
+        if url in content_types.get("plants", []):
+            return "plants"
+
+        # Check if URL is in the zombies list
+        if url in content_types.get("zombies", []):
+            return "zombies"
+
+        # Return None if not found in either category
+        return None
+
+    def scrape_page(self, url, content_type, output_filename=None):
+        """Main scraping function
+
+        Args:
+            url (str): Wiki URL to scrape
+            content_type (str): Either 'plants' or 'zombies' to determine theme and categorization
+            output_filename (str, optional): Custom output filename. If None, generates from URL.
+        """
         # Fetch the page
         html = self.fetch_page(url)
         if not html:
@@ -213,9 +234,12 @@ class PvZWikiScraper:
             print("Failed to extract main content")
             return False
 
+        # Use the provided content type
+        determined_content_type = content_type
+
         # Clean and process content
         main_content_html, sidebar_content_html = self.content_processor.clean_content(
-            main_content
+            main_content, determined_content_type
         )
         if not main_content_html:
             print("Failed to clean content")
@@ -250,13 +274,6 @@ class PvZWikiScraper:
 
         # Ensure directory exists for organized content
         output_path.parent.mkdir(parents=True, exist_ok=True)
-
-        # Determine content type from URL or parameter
-        determined_content_type = content_type
-        if determined_content_type is None:
-            determined_content_type = (
-                "plants" if "/植物/" in url or "豌豆射手" in url else "zombies"
-            )
 
         # Create final HTML with consistent relative paths
         final_html = self.create_clean_html(
@@ -314,7 +331,7 @@ class PvZWikiScraper:
             print(f"\n[{i}/{total}] 📄 Processing: {url}")
 
             # Scrape the page
-            success = self.scrape_page(url, content_type=content_type)
+            success = self.scrape_page(url, content_type)
 
             if success:
                 success_count += 1
@@ -412,7 +429,10 @@ def main():
 
         scraper = PvZWikiScraper()
         print(f"Starting scrape of: {url}")
-        success = scraper.scrape_page(url, output_filename)
+
+        # Determine content type from URL
+        content_type = scraper._determine_content_type_from_url(url) or "plants"
+        success = scraper.scrape_page(url, content_type, output_filename)
 
         if success:
             print("✅ Scraping completed successfully!")
@@ -469,7 +489,10 @@ def main():
     elif args.url:
         # Single page mode
         print(f"Starting scrape of: {args.url}")
-        success = scraper.scrape_page(args.url, args.output_filename)
+
+        # Determine content type from URL
+        content_type = scraper._determine_content_type_from_url(args.url) or "plants"
+        success = scraper.scrape_page(args.url, content_type, args.output_filename)
 
         if success:
             print("✅ Scraping completed successfully!")

@@ -304,7 +304,7 @@ td {
     color: var(--secondary-color);
     font-weight: 600;
     font-size: 0.9em;
-    width: 120px;
+    flex: 1 0 80px;
 }
 
 .name-value {
